@@ -75,7 +75,10 @@
     }
   </style>
   <!-- Scripts -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
   <script defer src="pomodoro.js"></script>
+  <script defer src="ai.js"></script>
 </head>
 <body class="bg-bg-deep text-white font-body h-screen w-screen overflow-hidden flex selection:bg-focus-green selection:text-black">
 
@@ -167,17 +170,20 @@
         <div class="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent z-10"></div>
         
         <!-- Placeholder content -->
-        <div class="w-full h-full bg-surface-dark/90 flex flex-col items-center justify-center text-white/30 relative">
+        <div id="webcam-placeholder" class="w-full h-full bg-surface-dark/90 flex flex-col items-center justify-center text-white/30 relative">
           
           <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
           <span class="font-mono text-xs uppercase tracking-widest font-bold">Webcam Feed</span>
-          <span class="font-mono text-[10px] mt-1.5 text-focus-green/60 uppercase tracking-wider">Awaiting Signal...</span>
+          <span id="webcam-status" class="font-mono text-[10px] mt-1.5 text-focus-green/60 uppercase tracking-wider">Awaiting Signal...</span>
           
           <!-- Cyber Scanning Line Effect -->
           <div class="absolute top-0 left-0 w-full h-[2px] bg-focus-green/40 shadow-[0_0_10px_rgba(57,255,20,0.6)] animate-scan"></div>
         </div>
+        
+        <!-- Webcam Canvas Container -->
+        <div id="webcam-container" class="absolute inset-0 z-20 flex items-center justify-center hidden rounded-lg overflow-hidden"></div>
       </div>
     </div>
   </main>
