@@ -74,6 +74,8 @@
       animation: slideDown 3s ease-in-out infinite;
     }
   </style>
+  <!-- Scripts -->
+  <script defer src="pomodoro.js"></script>
 </head>
 <body class="bg-bg-deep text-white font-body h-screen w-screen overflow-hidden flex selection:bg-focus-green selection:text-black">
 
@@ -150,7 +152,7 @@
       </div>
 
       <!-- Control Buttons -->
-      <div class="flex items-center gap-6">
+      <div class="flex items-center gap-6 relative z-50">
         <button id="btnPause" class="btn-secondary">Pause</button>
         <button id="btnStart" class="btn-primary">Start Focus</button>
         <button id="btnAbort" class="btn-danger">Abort</button>
@@ -180,7 +182,6 @@
     </div>
   </main>
 
-  <!-- Scripts -->
-  <script src="pomodoro.js"></script>
+  
 </body>
 </html>
