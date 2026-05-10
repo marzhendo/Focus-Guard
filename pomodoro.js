@@ -41,6 +41,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Web Audio API for alerting
+  function playBeep() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+      
+      // Beep sequence
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.2);
+      
+      setTimeout(() => {
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
+        osc2.start();
+        osc2.stop(audioCtx.currentTime + 0.2);
+      }, 150);
+      
+    } catch (e) {
+      console.warn('Web Audio API not supported', e);
+    }
+  }
+
   // --- State Management & UI Updates ---
   function changeState(newState) {
     currentState = newState;
@@ -54,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statusText) statusText.textContent = "AI STANDBY";
       
       setThemeColor('focus-green');
-      clearInterval(timerInterval);
+      if (timerInterval) clearInterval(timerInterval);
     } 
     else if (newState === STATES.FOCUS_ACTIVE) {
       if (sessionTitle) sessionTitle.textContent = "Focus Session";
@@ -73,36 +111,55 @@ document.addEventListener('DOMContentLoaded', () => {
       
       setThemeColor('break-blue');
     }
+    else if (newState === STATES.ALERT) {
+      if (sessionTitle) sessionTitle.textContent = "Focus Session";
+      if (sessionSubtitle) sessionSubtitle.textContent = "DISTRACTION DETECTED: PLEASE FOCUS!";
+      if (statusText) statusText.textContent = "ALERT";
+      
+      setThemeColor('alert-red');
+      playBeep();
+      // Notice: We DO NOT stop timerInterval here
+    }
   }
 
   function setThemeColor(color) {
+    // Clean up all possible theme classes first
+    const themes = ['text-focus-green', 'text-break-blue', 'text-alert-red'];
+    const glows = ['text-glow', 'text-glow-blue', 'text-glow-red'];
+    const borders = ['border-focus-green/20', 'border-break-blue/20', 'border-alert-red/20', 'border-focus-green/30', 'border-break-blue/30', 'border-alert-red/30'];
+    const bgs = ['bg-focus-green', 'bg-break-blue', 'bg-alert-red'];
+    const shadows = ['shadow-[0_0_8px_#39FF14]', 'shadow-[0_0_8px_#3B82F6]', 'shadow-[0_0_8px_#EF4444]'];
+
+    if (timerDisplay) timerDisplay.classList.remove(...themes, ...glows);
+    if (statusCard) statusCard.classList.remove(...borders);
+    if (statusDot) statusDot.classList.remove(...bgs, ...shadows);
+    if (statusText) statusText.classList.remove(...themes);
+    if (pulseRing1) pulseRing1.classList.remove(...borders);
+    if (pulseRing2) pulseRing2.classList.remove(...borders);
+
+    // Apply specific theme classes
     if (color === 'break-blue') {
-      if (timerDisplay) {
-        timerDisplay.classList.replace('text-focus-green', 'text-break-blue');
-        timerDisplay.classList.replace('text-glow', 'text-glow-blue');
-      }
-      if (statusCard) statusCard.classList.replace('border-focus-green/20', 'border-break-blue/20');
-      if (statusDot) {
-        statusDot.classList.replace('bg-focus-green', 'bg-break-blue');
-        statusDot.classList.replace('shadow-[0_0_8px_#39FF14]', 'shadow-[0_0_8px_#3B82F6]');
-      }
-      if (statusText) statusText.classList.replace('text-focus-green', 'text-break-blue');
-      if (pulseRing1) pulseRing1.classList.replace('border-focus-green/30', 'border-break-blue/30');
-      if (pulseRing2) pulseRing2.classList.replace('border-focus-green/20', 'border-break-blue/20');
+      if (timerDisplay) timerDisplay.classList.add('text-break-blue', 'text-glow-blue');
+      if (statusCard) statusCard.classList.add('border-break-blue/20');
+      if (statusDot) statusDot.classList.add('bg-break-blue', 'shadow-[0_0_8px_#3B82F6]');
+      if (statusText) statusText.classList.add('text-break-blue');
+      if (pulseRing1) pulseRing1.classList.add('border-break-blue/30');
+      if (pulseRing2) pulseRing2.classList.add('border-break-blue/20');
+    } else if (color === 'alert-red') {
+      if (timerDisplay) timerDisplay.classList.add('text-alert-red', 'text-glow-red');
+      if (statusCard) statusCard.classList.add('border-alert-red/20');
+      if (statusDot) statusDot.classList.add('bg-alert-red', 'shadow-[0_0_8px_#EF4444]');
+      if (statusText) statusText.classList.add('text-alert-red');
+      if (pulseRing1) pulseRing1.classList.add('border-alert-red/30');
+      if (pulseRing2) pulseRing2.classList.add('border-alert-red/20');
     } else {
-      // Revert back to focus-green
-      if (timerDisplay) {
-        timerDisplay.classList.replace('text-break-blue', 'text-focus-green');
-        timerDisplay.classList.replace('text-glow-blue', 'text-glow');
-      }
-      if (statusCard) statusCard.classList.replace('border-break-blue/20', 'border-focus-green/20');
-      if (statusDot) {
-        statusDot.classList.replace('bg-break-blue', 'bg-focus-green');
-        statusDot.classList.replace('shadow-[0_0_8px_#3B82F6]', 'shadow-[0_0_8px_#39FF14]');
-      }
-      if (statusText) statusText.classList.replace('text-break-blue', 'text-focus-green');
-      if (pulseRing1) pulseRing1.classList.replace('border-break-blue/30', 'border-focus-green/30');
-      if (pulseRing2) pulseRing2.classList.replace('border-break-blue/20', 'border-focus-green/20');
+      // Default focus-green
+      if (timerDisplay) timerDisplay.classList.add('text-focus-green', 'text-glow');
+      if (statusCard) statusCard.classList.add('border-focus-green/20');
+      if (statusDot) statusDot.classList.add('bg-focus-green', 'shadow-[0_0_8px_#39FF14]');
+      if (statusText) statusText.classList.add('text-focus-green');
+      if (pulseRing1) pulseRing1.classList.add('border-focus-green/30');
+      if (pulseRing2) pulseRing2.classList.add('border-focus-green/20');
     }
   }
 
@@ -113,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateDisplay();
     } else {
       // Timer reached 00:00
-      if (currentState === STATES.FOCUS_ACTIVE) {
+      if (currentState === STATES.FOCUS_ACTIVE || currentState === STATES.ALERT) {
         changeState(STATES.BREAK_TIME);
         startTimer(); // Auto-start the 5 min break timer
       } else if (currentState === STATES.BREAK_TIME) {
@@ -163,4 +220,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize timer display on page load
   updateDisplay();
+
+  // --- EXPORT GLOBALS FOR AI.JS ---
+  window.getCurrentState = () => currentState;
+  window.changeState = (newState) => {
+    if (STATES[newState]) {
+      changeState(STATES[newState]);
+    }
+  };
 });
