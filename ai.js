@@ -81,12 +81,18 @@ async function predict() {
         console.log(prediction[i].className + ': ' + prediction[i].probability.toFixed(2));
     }
     
-    // As instructed: prediction[0] is Focus, prediction[1] is Distracted
-    let focusProb = prediction[0].probability;
-    let distProb = prediction[1].probability;
+    // Dynamically find classes based on string inclusion to avoid index mismatch
+    const distracObj = prediction.find(p => p.className.toLowerCase().includes('terdistraksi'));
+    const focusObj = prediction.find(p => p.className.toLowerCase().includes('fokus'));
+
+    // Prevent errors if classes aren't named exactly as expected
+    if (!distracObj || !focusObj) {
+        console.warn("Class names mismatch. Please ensure model has classes containing 'fokus' and 'terdistraksi'.");
+        return;
+    }
 
     // --- DISTRACTION LOGIC ---
-    if (state === 'FOCUS_ACTIVE' && distProb > 0.85) {
+    if (state === 'FOCUS_ACTIVE' && distracObj.probability > 0.85) {
         if (!distractionStartTime) {
             distractionStartTime = Date.now();
         } else {
@@ -96,7 +102,7 @@ async function predict() {
         }
     } 
     // --- AUTO-RESET LOGIC ---
-    else if (focusProb > 0.85) {
+    else if (focusObj.probability > 0.85) {
         distractionStartTime = null; // Reset counter
         
         if (state === 'ALERT') {
