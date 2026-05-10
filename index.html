@@ -21,6 +21,7 @@
           colors: {
             'focus-green': '#39FF14',
             'alert-red': '#EF4444',
+            'break-blue': '#3B82F6',
             'bg-deep': '#020617',
             'surface-dark': '#12161D',
           },
@@ -56,6 +57,9 @@
       }
       .text-glow {
         text-shadow: 0 0 15px rgba(57, 255, 20, 0.6), 0 0 30px rgba(57, 255, 20, 0.3);
+      }
+      .text-glow-blue {
+        text-shadow: 0 0 15px rgba(59, 130, 246, 0.6), 0 0 30px rgba(59, 130, 246, 0.3);
       }
     }
 
@@ -122,12 +126,12 @@
     <!-- Header Section -->
     <header class="p-8 flex justify-between items-center z-10">
       <div>
-        <h2 class="font-display text-3xl font-bold text-white tracking-tight">Focus Session</h2>
-        <p class="text-white/50 font-mono text-xs mt-2 uppercase tracking-widest">System Armed & Monitoring</p>
+        <h2 id="sessionTitle" class="font-display text-3xl font-bold text-white tracking-tight">Focus Session</h2>
+        <p id="sessionSubtitle" class="text-white/50 font-mono text-xs mt-2 uppercase tracking-widest">System Armed & Monitoring</p>
       </div>
-      <div class="glass-panel px-5 py-2.5 flex items-center gap-3 border-focus-green/20">
-        <div class="w-2 h-2 rounded-full bg-focus-green animate-pulse shadow-[0_0_8px_#39FF14]"></div>
-        <span class="font-mono text-xs text-focus-green uppercase tracking-[0.2em] font-bold">AI Active</span>
+      <div id="statusCard" class="glass-panel px-5 py-2.5 flex items-center gap-3 border-focus-green/20 transition-colors duration-500">
+        <div id="statusDot" class="w-2 h-2 rounded-full bg-focus-green animate-pulse shadow-[0_0_8px_#39FF14] transition-colors duration-500"></div>
+        <span id="statusText" class="font-mono text-xs text-focus-green uppercase tracking-[0.2em] font-bold transition-colors duration-500">AI Active</span>
       </div>
     </header>
 
@@ -137,19 +141,19 @@
       <!-- Giant Timer Display -->
       <div class="relative mb-14 group">
         <!-- The "Focus Pulse" Rings -->
-        <div class="absolute inset-0 rounded-full border border-focus-green/30 scale-[1.15] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] opacity-50"></div>
-        <div class="absolute inset-0 rounded-full border border-focus-green/20 scale-[1.3] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite_1s] opacity-30"></div>
+        <div id="pulseRing1" class="absolute inset-0 rounded-full border border-focus-green/30 scale-[1.15] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] opacity-50 transition-colors duration-500"></div>
+        <div id="pulseRing2" class="absolute inset-0 rounded-full border border-focus-green/20 scale-[1.3] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite_1s] opacity-30 transition-colors duration-500"></div>
         
-        <div class="text-[14rem] font-mono font-bold leading-none text-focus-green text-glow tabular-nums tracking-tighter cursor-default">
+        <div id="timerDisplay" class="text-[14rem] font-mono font-bold leading-none text-focus-green text-glow tabular-nums tracking-tighter cursor-default transition-colors duration-500">
           25:00
         </div>
       </div>
 
       <!-- Control Buttons -->
       <div class="flex items-center gap-6">
-        <button class="btn-secondary">Pause</button>
-        <button class="btn-primary">Start Focus</button>
-        <button class="btn-danger">Abort</button>
+        <button id="btnPause" class="btn-secondary">Pause</button>
+        <button id="btnStart" class="btn-primary">Start Focus</button>
+        <button id="btnAbort" class="btn-danger">Abort</button>
       </div>
     </div>
 
@@ -176,5 +180,7 @@
     </div>
   </main>
 
+  <!-- Scripts -->
+  <script src="pomodoro.js"></script>
 </body>
 </html>
