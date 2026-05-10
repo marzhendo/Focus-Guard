@@ -52,25 +52,26 @@ async function initAI() {
 async function predictLoop() {
     webcam.update(); // Update the webcam frame
     
-    // Only predict if currentState is FOCUS_ACTIVE (from pomodoro.js)
-    if (typeof currentState !== 'undefined' && currentState === 'FOCUS_ACTIVE') {
-        await predict();
-    }
+    // We call predict() every frame, but predict() will decide whether to run AI
+    await predict();
     
     window.requestAnimationFrame(predictLoop);
 }
 
 // Run the webcam image through the image model
 async function predict() {
-    // predict can take in an image, video or canvas html element
-    const prediction = await model.predict(webcam.canvas);
-    
-    // Log the probabilities to console
-    let logStr = "AI Predict -> ";
-    for (let i = 0; i < maxPredictions; i++) {
-        logStr += `${prediction[i].className}: ${(prediction[i].probability * 100).toFixed(1)}% | `;
+    // Only run prediction if the current state is FOCUS_ACTIVE
+    if (typeof window.getCurrentState === 'function' && window.getCurrentState() === 'FOCUS_ACTIVE') {
+        // predict can take in an image, video or canvas html element
+        const prediction = await model.predict(webcam.canvas);
+        
+        // Log the probabilities to console
+        let logStr = "AI Predict -> ";
+        for (let i = 0; i < maxPredictions; i++) {
+            logStr += `${prediction[i].className}: ${(prediction[i].probability * 100).toFixed(1)}% | `;
+        }
+        console.log(logStr);
     }
-    console.log(logStr);
 }
 
 // Start AI initialization automatically when the script loads

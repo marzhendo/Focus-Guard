@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let timerInterval = null;
   let timeRemaining = 25 * 60; // default 25 minutes in seconds
 
+  // Expose state globally for ai.js
+  window.getCurrentState = () => currentState;
+
   // --- DOM Elements ---
   const timerDisplay = document.getElementById('timerDisplay');
   const btnStart = document.getElementById('btnStart');
