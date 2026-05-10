@@ -28,12 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const pulseRing1 = document.getElementById('pulseRing1');
   const pulseRing2 = document.getElementById('pulseRing2');
 
-  // Verify elements exist to avoid null errors
-  if (!timerDisplay || !btnStart || !btnPause || !btnAbort) {
-    console.error("DOM Elements missing. Please check IDs in index.html.");
-    return;
-  }
-
   // --- Helper Functions ---
   function formatTime(seconds) {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -129,13 +123,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function startTimer() {
-    clearInterval(timerInterval); // Avoid duplicate intervals
+    if (timerInterval) clearInterval(timerInterval); // Avoid duplicate intervals
     timerInterval = setInterval(tick, 1000);
   }
 
   // --- Event Listeners ---
   if (btnStart) {
     btnStart.addEventListener('click', () => {
+      console.log('Tombol Start di-klik');
       if (currentState === STATES.IDLE) {
         changeState(STATES.FOCUS_ACTIVE);
       }
@@ -145,12 +140,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnPause) {
     btnPause.addEventListener('click', () => {
-      clearInterval(timerInterval);
+      console.log('Tombol Pause di-klik');
+      if (timerInterval) clearInterval(timerInterval);
     });
   }
 
   if (btnAbort) {
     btnAbort.addEventListener('click', () => {
+      console.log('Tombol Abort di-klik');
       changeState(STATES.IDLE);
     });
   }
