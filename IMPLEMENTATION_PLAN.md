@@ -29,7 +29,7 @@
 **Goal:** Trigger the red alert state when a distraction is detected.
 - [ ] In the prediction loop, check the probability of the "Terdistraksi" (Distracted) class.
 - [ ] If probability > 0.85, start a hidden counter.
-- [ ] If the distraction persists for > 5 seconds, trigger the `ALERT` state.
+- [ ] If the distraction persists for > 10 seconds, trigger the `ALERT` state.
 - [ ] Update `ui.js` to handle the `ALERT` state:
       - Change the entire UI theme to Red Warning (red borders, red timer).
       - Display the "DISTRACTION DETECTED" overlay message.
