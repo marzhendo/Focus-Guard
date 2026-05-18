@@ -42,40 +42,49 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Web Audio API for alerting
-  function playBeep() {
+  let audioCtx = null;
+  let alarmInterval = null;
+
+  function startAlarm() {
+    if (alarmInterval) return; // already playing
+    
     try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+      let toggle = false;
+      
+      alarmInterval = setInterval(() => {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
 
-      oscillator.type = 'square';
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-      
-      // Beep sequence
-      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
-      
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.2);
-      
-      setTimeout(() => {
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.type = 'square';
-        osc2.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gain2.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
-        osc2.start();
-        osc2.stop(audioCtx.currentTime + 0.2);
-      }, 150);
-      
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(toggle ? 800 : 400, audioCtx.currentTime); 
+        
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+        
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.3);
+        
+        toggle = !toggle;
+      }, 300); // Alternate every 300ms
     } catch (e) {
       console.warn('Web Audio API not supported', e);
+    }
+  }
+
+  function stopAlarm() {
+    if (alarmInterval) {
+      clearInterval(alarmInterval);
+      alarmInterval = null;
     }
   }
 
@@ -93,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       setThemeColor('focus-green');
       if (timerInterval) clearInterval(timerInterval);
+      stopAlarm();
     } 
     else if (newState === STATES.FOCUS_ACTIVE) {
       if (sessionTitle) sessionTitle.textContent = "Focus Session";
@@ -100,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statusText) statusText.textContent = "AI ACTIVE";
       
       setThemeColor('focus-green');
+      stopAlarm();
     } 
     else if (newState === STATES.BREAK_TIME) {
       timeRemaining = 5 * 60;
@@ -110,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statusText) statusText.textContent = "AI PAUSED";
       
       setThemeColor('break-blue');
+      stopAlarm();
     }
     else if (newState === STATES.ALERT) {
       if (sessionTitle) sessionTitle.textContent = "Focus Session";
@@ -117,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statusText) statusText.textContent = "ALERT";
       
       setThemeColor('alert-red');
-      playBeep();
+      startAlarm();
       // Notice: We DO NOT stop timerInterval here
     }
   }
