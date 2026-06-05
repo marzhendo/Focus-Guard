@@ -47,7 +47,7 @@ async function initAI() {
         console.error("Failed to initialize AI model:", error);
         if (webcamStatus) {
             webcamStatus.classList.replace('text-focus-green/60', 'text-alert-red');
-            webcamStatus.textContent = "Camera Error / Denied";
+            webcamStatus.textContent = "Error: " + (error.name || error.message || "Camera Denied");
         }
     }
 }
@@ -58,8 +58,8 @@ async function predictLoop() {
     // Check if we have the global getter function
     if (typeof window.getCurrentState === 'function') {
         const state = window.getCurrentState();
-        // Predict if we are focusing OR if we are currently alerting (for auto-reset)
-        if (state === 'FOCUS_ACTIVE' || state === 'ALERT') {
+        // Predict if we are focusing, warning, OR if we are currently alerting (for auto-reset)
+        if (state === 'FOCUS_ACTIVE' || state === 'WARNING' || state === 'ALERT') {
             await predict();
         }
     }
@@ -91,13 +91,19 @@ async function predict() {
         return;
     }
 
+    const config = window.DISTRACTION_CONFIG || { warningThreshold: 5, alertThreshold: 10 };
+
     // --- DISTRACTION LOGIC ---
-    if (state === 'FOCUS_ACTIVE' && distracObj.probability > 0.85) {
+    if ((state === 'FOCUS_ACTIVE' || state === 'WARNING' || state === 'ALERT') && distracObj.probability > 0.85) {
         if (!distractionStartTime) {
             distractionStartTime = Date.now();
         } else {
-            if (Date.now() - distractionStartTime > 10000) {
+            const distractionDuration = (Date.now() - distractionStartTime) / 1000;
+            
+            if (distractionDuration >= config.alertThreshold && state !== 'ALERT') {
                 window.changeState('ALERT');
+            } else if (distractionDuration >= config.warningThreshold && state !== 'WARNING' && state !== 'ALERT') {
+                window.changeState('WARNING');
             }
         }
     } 
@@ -105,7 +111,7 @@ async function predict() {
     else if (focusObj.probability > 0.85) {
         distractionStartTime = null; // Reset counter
         
-        if (state === 'ALERT') {
+        if (state === 'ALERT' || state === 'WARNING') {
             window.changeState('FOCUS_ACTIVE');
         }
     }
