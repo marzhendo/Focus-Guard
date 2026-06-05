@@ -84,6 +84,7 @@
   <!-- Scripts -->
   <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
   <script defer src="pomodoro.js"></script>
   <script defer src="ai.js"></script>
 </head>
@@ -203,7 +204,18 @@
         </div>
         
         <!-- Webcam Canvas Container -->
-        <div id="webcam-container" class="absolute inset-0 z-20 flex items-center justify-center hidden rounded-lg overflow-hidden"></div>
+        <div id="webcam-container" class="absolute inset-0 z-20 flex items-center justify-center hidden rounded-lg overflow-hidden relative">
+          <!-- Overlay Canvas for Face Bounding Box -->
+          <canvas id="overlayCanvas" width="320" height="240" class="absolute inset-0 w-full h-full object-cover z-30 pointer-events-none"></canvas>
+          
+          <!-- Face Lost Status UI -->
+          <div id="faceLostStatus" class="absolute inset-0 z-40 bg-black/70 flex flex-col items-center justify-center hidden backdrop-blur-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-alert-red mb-2 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p class="text-alert-red font-bold font-mono uppercase tracking-widest text-center animate-pulse text-sm">Face Not<br>Detected</p>
+          </div>
+        </div>
       </div>
     </div>
   </main>
