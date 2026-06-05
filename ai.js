@@ -10,6 +10,15 @@ const webcamStatus = document.getElementById("webcam-status");
 // Track distraction time
 let distractionStartTime = null;
 
+// Face Detection Variables
+let faceDetection;
+let lastFaceDetectTime = 0;
+let faceLostStartTime = null;
+
+const overlayCanvas = document.getElementById("overlayCanvas");
+const overlayCtx = overlayCanvas ? overlayCanvas.getContext("2d") : null;
+const faceLostStatus = document.getElementById("faceLostStatus");
+
 // Load the image model and setup the webcam
 async function initAI() {
     if (webcamStatus) webcamStatus.textContent = "Loading Model...";
@@ -18,6 +27,16 @@ async function initAI() {
     const metadataURL = URL + "metadata.json";
 
     try {
+        // Initialize MediaPipe Face Detection
+        faceDetection = new FaceDetection({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
+        }});
+        faceDetection.setOptions({
+            model: 'short',
+            minDetectionConfidence: 0.5
+        });
+        faceDetection.onResults(onFaceResults);
+
         // Load the model and metadata
         model = await tmImage.load(modelURL, metadataURL);
         maxPredictions = model.getTotalClasses();
@@ -63,8 +82,69 @@ async function predictLoop() {
             await predict();
         }
     }
+
+    // MediaPipe Face Detection (Throttled to max 10 FPS)
+    const now = Date.now();
+    if (now - lastFaceDetectTime >= 100 && faceDetection) {
+        lastFaceDetectTime = now;
+        await faceDetection.send({image: webcam.canvas});
+    }
     
     window.requestAnimationFrame(predictLoop);
+}
+
+function onFaceResults(results) {
+    if (!overlayCtx || !overlayCanvas) return;
+    
+    // Clear previous drawing
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+    if (results.detections && results.detections.length > 0) {
+        // Face is detected
+        faceLostStartTime = null;
+        if (faceLostStatus) faceLostStatus.classList.add('hidden');
+
+        // Draw bounding box
+        const state = typeof window.getCurrentState === 'function' ? window.getCurrentState() : 'IDLE';
+        let color = 'transparent';
+        if (state === 'FOCUS_ACTIVE') color = '#39FF14';
+        else if (state === 'WARNING') color = '#EAB308';
+        else if (state === 'ALERT') color = '#EF4444';
+
+        if (color !== 'transparent') {
+            overlayCtx.strokeStyle = color;
+            overlayCtx.lineWidth = 4;
+            overlayCtx.shadowColor = color;
+            overlayCtx.shadowBlur = 10;
+            
+            for (const detection of results.detections) {
+                const bbox = detection.boundingBox;
+                const w = bbox.width * overlayCanvas.width;
+                const h = bbox.height * overlayCanvas.height;
+                // MediaPipe xCenter/yCenter represent center, but some versions use xMin/yMin
+                // We'll calculate top-left assuming it provides width/height/xCenter/yCenter,
+                // but handle fallback to xMin/yMin if that's what's provided.
+                const x = bbox.xCenter !== undefined 
+                    ? (bbox.xCenter * overlayCanvas.width - w / 2)
+                    : (bbox.xMin * overlayCanvas.width);
+                const y = bbox.yCenter !== undefined
+                    ? (bbox.yCenter * overlayCanvas.height - h / 2)
+                    : (bbox.yMin * overlayCanvas.height);
+
+                overlayCtx.strokeRect(x, y, w, h);
+            }
+        }
+    } else {
+        // Face is NOT detected
+        if (!faceLostStartTime) {
+            faceLostStartTime = Date.now();
+        } else {
+            const lostDuration = Date.now() - faceLostStartTime;
+            if (lostDuration > 1000) { // > 1 second
+                if (faceLostStatus) faceLostStatus.classList.remove('hidden');
+            }
+        }
+    }
 }
 
 // Run the webcam image through the image model
