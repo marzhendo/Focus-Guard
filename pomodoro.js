@@ -1,10 +1,17 @@
 // pomodoro.js
 
 document.addEventListener('DOMContentLoaded', () => {
+  // --- Configuration ---
+  window.DISTRACTION_CONFIG = {
+    warningThreshold: 5,
+    alertThreshold: 10
+  };
+
   // --- Global States ---
   const STATES = {
     IDLE: 'IDLE',
     FOCUS_ACTIVE: 'FOCUS_ACTIVE',
+    WARNING: 'WARNING',
     BREAK_TIME: 'BREAK_TIME',
     ALERT: 'ALERT'
   };
@@ -27,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusText = document.getElementById('statusText');
   const pulseRing1 = document.getElementById('pulseRing1');
   const pulseRing2 = document.getElementById('pulseRing2');
+  
+  const warningBanner = document.getElementById('warningBanner');
+  const warningText = document.getElementById('warningText');
 
   // --- Helper Functions ---
   function formatTime(seconds) {
@@ -88,9 +98,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // --- Specific State Functions ---
+  function enterWarningState() {
+    if (sessionTitle) sessionTitle.textContent = "Focus Session";
+    if (sessionSubtitle) sessionSubtitle.textContent = "WARNING: DISTRACTION DETECTED";
+    if (statusText) statusText.textContent = "WARNING";
+    
+    setThemeColor('warning-yellow');
+    if (warningBanner) warningBanner.classList.remove('hidden');
+    stopAlarm(); // Ensure no audio
+  }
+
+  function exitWarningState() {
+    if (warningBanner) warningBanner.classList.add('hidden');
+  }
+
+  function enterAlertState() {
+    if (sessionTitle) sessionTitle.textContent = "Focus Session";
+    if (sessionSubtitle) sessionSubtitle.textContent = "DISTRACTION DETECTED: PLEASE FOCUS!";
+    if (statusText) statusText.textContent = "ALERT";
+    
+    setThemeColor('alert-red');
+    if (warningBanner) warningBanner.classList.add('hidden'); // Hide warning banner
+    startAlarm();
+  }
+
+  function exitAlertState() {
+    stopAlarm();
+  }
+
   // --- State Management & UI Updates ---
   function changeState(newState) {
+    const prevState = currentState;
     currentState = newState;
+    
+    // Call exit functions if leaving specific states
+    if (prevState === STATES.WARNING && newState !== STATES.WARNING) {
+      exitWarningState();
+    }
+    if (prevState === STATES.ALERT && newState !== STATES.ALERT) {
+      exitAlertState();
+    }
     
     if (newState === STATES.IDLE) {
       timeRemaining = 25 * 60;
@@ -102,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       setThemeColor('focus-green');
       if (timerInterval) clearInterval(timerInterval);
-      stopAlarm();
     } 
     else if (newState === STATES.FOCUS_ACTIVE) {
       if (sessionTitle) sessionTitle.textContent = "Focus Session";
@@ -110,8 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statusText) statusText.textContent = "AI ACTIVE";
       
       setThemeColor('focus-green');
-      stopAlarm();
-    } 
+    }
+    else if (newState === STATES.WARNING) {
+      enterWarningState();
+    }
     else if (newState === STATES.BREAK_TIME) {
       timeRemaining = 5 * 60;
       updateDisplay();
@@ -121,26 +170,25 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statusText) statusText.textContent = "AI PAUSED";
       
       setThemeColor('break-blue');
-      stopAlarm();
     }
     else if (newState === STATES.ALERT) {
-      if (sessionTitle) sessionTitle.textContent = "Focus Session";
-      if (sessionSubtitle) sessionSubtitle.textContent = "DISTRACTION DETECTED: PLEASE FOCUS!";
-      if (statusText) statusText.textContent = "ALERT";
-      
-      setThemeColor('alert-red');
-      startAlarm();
-      // Notice: We DO NOT stop timerInterval here
+      enterAlertState();
     }
   }
 
   function setThemeColor(color) {
     // Clean up all possible theme classes first
-    const themes = ['text-focus-green', 'text-break-blue', 'text-alert-red'];
-    const glows = ['text-glow', 'text-glow-blue', 'text-glow-red'];
-    const borders = ['border-focus-green/20', 'border-break-blue/20', 'border-alert-red/20', 'border-focus-green/30', 'border-break-blue/30', 'border-alert-red/30'];
-    const bgs = ['bg-focus-green', 'bg-break-blue', 'bg-alert-red'];
-    const shadows = ['shadow-[0_0_8px_#39FF14]', 'shadow-[0_0_8px_#3B82F6]', 'shadow-[0_0_8px_#EF4444]'];
+    const themes = ['text-focus-green', 'text-break-blue', 'text-alert-red', 'text-warning-yellow'];
+    const glows = ['text-glow', 'text-glow-blue', 'text-glow-red', 'text-glow-yellow'];
+    const borders = [
+      'border-focus-green/20', 'border-break-blue/20', 'border-alert-red/20', 'border-warning-yellow/20',
+      'border-focus-green/30', 'border-break-blue/30', 'border-alert-red/30', 'border-warning-yellow/30'
+    ];
+    const bgs = ['bg-focus-green', 'bg-break-blue', 'bg-alert-red', 'bg-warning-yellow'];
+    const shadows = [
+      'shadow-[0_0_8px_#39FF14]', 'shadow-[0_0_8px_#3B82F6]', 
+      'shadow-[0_0_8px_#EF4444]', 'shadow-[0_0_8px_#EAB308]'
+    ];
 
     if (timerDisplay) timerDisplay.classList.remove(...themes, ...glows);
     if (statusCard) statusCard.classList.remove(...borders);
@@ -164,6 +212,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statusText) statusText.classList.add('text-alert-red');
       if (pulseRing1) pulseRing1.classList.add('border-alert-red/30');
       if (pulseRing2) pulseRing2.classList.add('border-alert-red/20');
+    } else if (color === 'warning-yellow') {
+      if (timerDisplay) timerDisplay.classList.add('text-warning-yellow', 'text-glow-yellow');
+      if (statusCard) statusCard.classList.add('border-warning-yellow/20');
+      if (statusDot) statusDot.classList.add('bg-warning-yellow', 'shadow-[0_0_8px_#EAB308]');
+      if (statusText) statusText.classList.add('text-warning-yellow');
+      if (pulseRing1) pulseRing1.classList.add('border-warning-yellow/30');
+      if (pulseRing2) pulseRing2.classList.add('border-warning-yellow/20');
     } else {
       // Default focus-green
       if (timerDisplay) timerDisplay.classList.add('text-focus-green', 'text-glow');
@@ -182,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateDisplay();
     } else {
       // Timer reached 00:00
-      if (currentState === STATES.FOCUS_ACTIVE || currentState === STATES.ALERT) {
+      if (currentState === STATES.FOCUS_ACTIVE || currentState === STATES.WARNING || currentState === STATES.ALERT) {
         changeState(STATES.BREAK_TIME);
         startTimer(); // Auto-start the 5 min break timer
       } else if (currentState === STATES.BREAK_TIME) {
