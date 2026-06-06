@@ -15,6 +15,13 @@ let faceDetection;
 let lastFaceDetectTime = 0;
 let faceLostStartTime = null;
 
+// Telemetry Variables
+let smoothedFocus = 0;
+let smoothedDistract = 0;
+const EMA_ALPHA = 0.2;
+let isFaceLostGlobal = false;
+let lastTelemetryUpdateTime = 0;
+
 const overlayCanvas = document.getElementById("overlayCanvas");
 const overlayCtx = overlayCanvas ? overlayCanvas.getContext("2d") : null;
 const faceLostStatus = document.getElementById("faceLostStatus");
@@ -102,6 +109,7 @@ function onFaceResults(results) {
     if (results.detections && results.detections.length > 0) {
         // Face is detected
         faceLostStartTime = null;
+        isFaceLostGlobal = false;
         if (faceLostStatus) faceLostStatus.classList.add('hidden');
 
         // Draw bounding box
@@ -141,6 +149,7 @@ function onFaceResults(results) {
         } else {
             const lostDuration = Date.now() - faceLostStartTime;
             if (lostDuration > 1000) { // > 1 second
+                isFaceLostGlobal = true;
                 if (faceLostStatus) faceLostStatus.classList.remove('hidden');
             }
         }
@@ -169,6 +178,27 @@ async function predict() {
     if (!distracObj || !focusObj) {
         console.warn("Class names mismatch. Please ensure model has classes containing 'fokus' and 'terdistraksi'.");
         return;
+    }
+
+    // --- TELEMETRY UPDATE ---
+    smoothedFocus = (smoothedFocus * (1 - EMA_ALPHA)) + (focusObj.probability * EMA_ALPHA);
+    smoothedDistract = (smoothedDistract * (1 - EMA_ALPHA)) + (distracObj.probability * EMA_ALPHA);
+    
+    const now = Date.now();
+    if (now - lastTelemetryUpdateTime > 100 && typeof window.updateTelemetryUI === 'function') {
+        lastTelemetryUpdateTime = now;
+        
+        let currentDistractTime = 0;
+        if (distractionStartTime) {
+            currentDistractTime = (now - distractionStartTime) / 1000;
+        }
+
+        window.updateTelemetryUI({
+            focusProb: smoothedFocus,
+            distractProb: smoothedDistract,
+            distractTime: currentDistractTime,
+            isFaceLost: isFaceLostGlobal
+        });
     }
 
     const config = window.DISTRACTION_CONFIG || { warningThreshold: 5, alertThreshold: 10 };
