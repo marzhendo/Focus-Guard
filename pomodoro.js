@@ -38,6 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const warningBanner = document.getElementById('warningBanner');
   const warningText = document.getElementById('warningText');
 
+  const telPanel = document.getElementById('telemetryPanel');
+  const telStatus = document.getElementById('telStatus');
+  const telFocusConf = document.getElementById('telFocusConf');
+  const telDistractConf = document.getElementById('telDistractConf');
+  const telCounter = document.getElementById('telCounter');
+  const telProgressBar = document.getElementById('telProgressBar');
+
   // --- Helper Functions ---
   function formatTime(seconds) {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -143,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newState === STATES.IDLE) {
       timeRemaining = 25 * 60;
       updateDisplay();
+      resetTelemetry();
       
       if (sessionTitle) sessionTitle.textContent = "Focus Session";
       if (sessionSubtitle) sessionSubtitle.textContent = "System Ready";
@@ -164,6 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (newState === STATES.BREAK_TIME) {
       timeRemaining = 5 * 60;
       updateDisplay();
+      resetTelemetry();
       
       if (sessionTitle) sessionTitle.textContent = "Break Time";
       if (sessionSubtitle) sessionSubtitle.textContent = "System Relaxed";
@@ -227,6 +236,76 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statusText) statusText.classList.add('text-focus-green');
       if (pulseRing1) pulseRing1.classList.add('border-focus-green/30');
       if (pulseRing2) pulseRing2.classList.add('border-focus-green/20');
+    }
+  }
+
+  // --- Telemetry Updates ---
+  function updateTelemetryUI(data) {
+    if (!telPanel || !telStatus || !telFocusConf || !telDistractConf || !telCounter || !telProgressBar) return;
+
+    // Set panel fully visible when active
+    telPanel.classList.remove('opacity-50');
+    telPanel.classList.add('opacity-100');
+
+    // Update confidences
+    telFocusConf.textContent = Math.round(data.focusProb * 100) + '%';
+    telDistractConf.textContent = Math.round(data.distractProb * 100) + '%';
+    
+    // Update counter
+    const dTime = data.distractTime.toFixed(1);
+    telCounter.textContent = `${dTime}s / ${window.DISTRACTION_CONFIG.alertThreshold}s`;
+
+    // Calculate progress
+    let progress = (data.distractTime / window.DISTRACTION_CONFIG.alertThreshold) * 100;
+    progress = Math.min(Math.max(progress, 0), 100);
+    telProgressBar.style.width = `${progress}%`;
+
+    // Clear previous colors
+    telStatus.classList.remove('text-focus-green', 'text-warning-yellow', 'text-alert-red', 'text-white/70');
+    telProgressBar.classList.remove('bg-focus-green', 'bg-warning-yellow', 'bg-alert-red', 'bg-white/50');
+
+    if (data.isFaceLost) {
+      telStatus.textContent = "FACE NOT DETECTED";
+      telStatus.classList.add('text-warning-yellow');
+      telProgressBar.classList.add('bg-white/50');
+      telProgressBar.style.width = '0%';
+    } else {
+      if (currentState === STATES.FOCUS_ACTIVE) {
+        telStatus.textContent = "FOCUSING";
+        telStatus.classList.add('text-focus-green');
+        telProgressBar.classList.add('bg-focus-green');
+      } else if (currentState === STATES.WARNING) {
+        telStatus.textContent = "DISTRACTED";
+        telStatus.classList.add('text-warning-yellow');
+        telProgressBar.classList.add('bg-warning-yellow');
+      } else if (currentState === STATES.ALERT) {
+        telStatus.textContent = "ALERT";
+        telStatus.classList.add('text-alert-red');
+        telProgressBar.classList.add('bg-alert-red');
+      } else {
+        telStatus.textContent = "STANDBY";
+        telStatus.classList.add('text-white/70');
+        telProgressBar.classList.add('bg-white/50');
+      }
+    }
+  }
+
+  function resetTelemetry() {
+    if (!telPanel) return;
+    telPanel.classList.remove('opacity-100');
+    telPanel.classList.add('opacity-50');
+    if (telFocusConf) telFocusConf.textContent = "0%";
+    if (telDistractConf) telDistractConf.textContent = "0%";
+    if (telCounter) telCounter.textContent = `0.0s / ${window.DISTRACTION_CONFIG.alertThreshold}s`;
+    if (telProgressBar) {
+      telProgressBar.style.width = "0%";
+      telProgressBar.classList.remove('bg-focus-green', 'bg-warning-yellow', 'bg-alert-red');
+      telProgressBar.classList.add('bg-white/50');
+    }
+    if (telStatus) {
+      telStatus.textContent = currentState === STATES.BREAK_TIME ? "MONITORING PAUSED" : "STANDBY";
+      telStatus.classList.remove('text-focus-green', 'text-warning-yellow', 'text-alert-red');
+      telStatus.classList.add('text-white/70');
     }
   }
 
@@ -295,4 +374,5 @@ document.addEventListener('DOMContentLoaded', () => {
       changeState(STATES[newState]);
     }
   };
+  window.updateTelemetryUI = updateTelemetryUI;
 });

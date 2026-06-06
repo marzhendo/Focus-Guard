@@ -184,7 +184,7 @@
     </div>
 
     <!-- Bottom Right Webcam Placeholder -->
-    <div class="absolute bottom-8 right-8 z-20">
+    <div class="absolute bottom-8 right-8 z-20 flex flex-col gap-4">
       <div class="glass-panel w-80 h-48 overflow-hidden relative group">
         <!-- Overlay borders for depth -->
         <div class="absolute inset-0 border border-white/10 rounded-lg z-10 pointer-events-none"></div>
@@ -214,6 +214,38 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <p class="text-alert-red font-bold font-mono uppercase tracking-widest text-center animate-pulse text-sm">Face Not<br>Detected</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Telemetry Panel -->
+      <div id="telemetryPanel" class="glass-panel w-80 p-4 flex flex-col gap-3 transition-opacity duration-300 opacity-50">
+        <!-- Status -->
+        <div class="flex justify-between items-center border-b border-white/10 pb-2">
+          <span class="font-mono text-[10px] text-white/70 uppercase tracking-widest">AI Status</span>
+          <span id="telStatus" class="font-mono text-[10px] font-bold tracking-widest text-white/70">STANDBY</span>
+        </div>
+        
+        <!-- Confidence -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <span class="font-mono text-[10px] text-white/80 uppercase tracking-wider">Focus</span>
+            <span id="telFocusConf" class="font-mono text-xs font-bold text-white">0%</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-mono text-[10px] text-white/80 uppercase tracking-wider">Distracted</span>
+            <span id="telDistractConf" class="font-mono text-xs font-bold text-white">0%</span>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="space-y-1.5 mt-1">
+          <div class="flex justify-between items-center">
+            <span class="font-mono text-[10px] text-white/80 uppercase tracking-wider">Alert Progress</span>
+            <span id="telCounter" class="font-mono text-[10px] text-white font-bold tabular-nums">0.0s / 10s</span>
+          </div>
+          <div class="h-1 w-full bg-white/20 rounded-full overflow-hidden">
+            <div id="telProgressBar" class="h-full w-0 bg-white/50 transition-all duration-100"></div>
           </div>
         </div>
       </div>
