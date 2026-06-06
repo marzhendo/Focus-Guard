@@ -502,7 +502,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       sortedHistory.forEach(session => {
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-white/5 transition-colors";
+        tr.className = "hover:bg-white/10 transition-colors cursor-pointer group";
+        tr.setAttribute('data-session-id', session.id);
+        
+        tr.addEventListener('click', () => {
+          openSessionDetail(session.id);
+        });
         
         const dateStr = new Date(session.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
         
@@ -519,6 +524,92 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.appendChild(tr);
       });
     }
+  }
+
+  function openSessionDetail(sessionId) {
+    const history = loadSessionHistory();
+    const session = history.find(s => s.id === sessionId);
+    if (!session) return;
+
+    const modal = document.getElementById('sessionDetailModal');
+    if (!modal) return;
+
+    const formatDur = (s) => {
+      const min = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return min > 0 ? `${min}m ${sec}s` : `${sec}s`;
+    };
+
+    const dateStr = new Date(session.timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+    document.getElementById('detailRating').textContent = dateStr;
+
+    document.getElementById('detailScoreValue').textContent = session.score;
+    const scoreColor = session.score >= 90 ? "text-focus-green" : session.score >= 75 ? "text-focus-green" : session.score >= 60 ? "text-warning-yellow" : "text-alert-red";
+    document.getElementById('detailScoreValue').className = `text-7xl font-display font-bold tabular-nums drop-shadow-[0_0_15px_rgba(57,255,20,0.5)] ${scoreColor}`;
+
+    const badgeEl = document.getElementById('detailBadge');
+    badgeEl.textContent = session.badge || "-";
+    badgeEl.className = `px-4 py-1.5 rounded-full border font-mono text-sm tracking-wide ${scoreColor} border-current bg-black/30 text-center`;
+
+    document.getElementById('detailFocusTime').textContent = formatDur(session.focusTime);
+    document.getElementById('detailDistractedTime').textContent = formatDur(session.distractedTime);
+    document.getElementById('detailFaceLostTime').textContent = formatDur(session.faceLostTime);
+    document.getElementById('detailWarnings').textContent = session.warnings;
+    document.getElementById('detailAlerts').textContent = session.alerts;
+
+    // Quality
+    const monColor = session.monitoringConfidence >= 95 ? "font-bold text-focus-green text-sm" : session.monitoringConfidence >= 80 ? "font-bold text-[#EAB308] text-sm" : session.monitoringConfidence >= 60 ? "font-bold text-warning-yellow text-sm" : "font-bold text-alert-red text-sm";
+    
+    document.getElementById('detailQualityLabel').className = monColor;
+    document.getElementById('detailQualityPercent').textContent = session.monitoringConfidence + "%";
+    
+    if (session.faceLostTime > 0.2 * session.sessionDuration) {
+      document.getElementById('detailQualityWarning').classList.remove('hidden');
+    } else {
+      document.getElementById('detailQualityWarning').classList.add('hidden');
+    }
+
+    // Progress Bars
+    let focusPct = session.focusPercentage || 0;
+    let distPct = 100 - focusPct;
+    
+    document.getElementById('detailFocusPercent').textContent = focusPct + "%";
+    document.getElementById('detailFocusBar').style.width = focusPct + "%";
+    document.getElementById('detailDistractPercent').textContent = distPct + "%";
+    document.getElementById('detailDistractBar').style.width = distPct + "%";
+
+    // Insight
+    document.getElementById('detailInsightText').textContent = session.insight || "Insight not available for this session.";
+
+    // Timeline
+    const tlContainer = document.getElementById('detailTimeline');
+    tlContainer.innerHTML = '';
+    
+    if (session.eventTimeline && session.eventTimeline.length > 0) {
+      session.eventTimeline.forEach(ev => {
+        let color = "text-white/80";
+        if (ev.type === "WARNING") color = "text-warning-yellow";
+        if (ev.type === "ALERT") color = "text-alert-red";
+        if (ev.type === "SESSION_START" || ev.type === "SESSION_COMPLETE") color = "text-focus-green";
+
+        const div = document.createElement('div');
+        div.className = "flex gap-4 border-b border-white/5 pb-2 last:border-0";
+        div.innerHTML = `<span class="text-white/40 min-w-[40px]">${ev.timestamp}</span><span class="${color}">${ev.type.replace('_', ' ')}</span>`;
+        tlContainer.appendChild(div);
+      });
+    } else {
+      tlContainer.innerHTML = '<span class="text-white/40">Timeline data not recorded for this session.</span>';
+    }
+
+    modal.classList.remove('hidden');
+  }
+
+  // Bind close detail modal
+  const btnCloseDetailModal = document.getElementById('btnCloseDetailModal');
+  if (btnCloseDetailModal) {
+    btnCloseDetailModal.addEventListener('click', () => {
+      document.getElementById('sessionDetailModal').classList.add('hidden');
+    });
   }
 
   // Initialize timer display on page load
@@ -665,7 +756,10 @@ document.addEventListener('DOMContentLoaded', () => {
       faceLostTime: m.faceLostTime,
       focusPercentage: focusPercentage,
       warnings: m.warningCount,
-      alerts: m.alertCount
+      alerts: m.alertCount,
+      insight: insight,
+      badge: badgeText,
+      eventTimeline: m.sessionEvents
     });
 
     if (history.length > 20) {
