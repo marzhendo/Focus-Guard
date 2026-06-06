@@ -123,7 +123,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
         Analytics
       </a>
-      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-md text-white/50 hover:text-white hover:bg-white/5 transition-colors font-medium">
+      <a href="#" id="nav-settings" class="flex items-center gap-3 px-4 py-3 rounded-md text-white/50 hover:text-white hover:bg-white/5 transition-colors font-medium">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
         Settings
       </a>
@@ -317,6 +317,120 @@
           </table>
         </div>
       </div>
+    </div>
+  </main>
+
+  <!-- Settings Area -->
+  <main id="main-settings" class="flex-1 relative flex flex-col z-0 hidden bg-bg-deep overflow-hidden">
+    <header class="p-8 pb-4 border-b border-white/5 flex justify-between items-center">
+      <div>
+        <h2 class="font-display text-3xl font-bold text-white tracking-tight">Settings</h2>
+        <p class="text-white/50 font-mono text-xs mt-2 uppercase tracking-widest">System Configuration</p>
+      </div>
+      <button id="btnRestoreDefaults" class="px-4 py-2 border border-white/10 rounded-md text-sm font-mono text-white/50 hover:text-white hover:bg-white/5 transition-colors">Restore Defaults</button>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-8">
+      
+      <!-- Monitoring Category -->
+      <section class="space-y-4">
+        <h3 class="font-mono text-sm text-focus-green uppercase tracking-widest flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          Monitoring
+        </h3>
+        
+        <div class="glass-panel p-6 border-white/5 space-y-6">
+          <!-- Warning Delay -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label for="warningDelayInput" class="font-medium text-white/90">Warning Delay</label>
+              <span id="warningDelayValue" class="font-mono text-sm text-white/50">5s</span>
+            </div>
+            <p class="text-xs text-white/40 mb-2">Time before a minor distraction triggers a warning.</p>
+            <input type="range" id="warningDelayInput" min="3" max="15" step="1" value="5" class="w-full accent-focus-green bg-white/10 rounded-lg appearance-none h-2 cursor-pointer">
+          </div>
+
+          <div class="w-full h-px bg-white/5"></div>
+
+          <!-- Alert Delay -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label for="alertDelayInput" class="font-medium text-white/90">Alert Delay</label>
+              <span id="alertDelayValue" class="font-mono text-sm text-white/50">10s</span>
+            </div>
+            <p class="text-xs text-white/40 mb-2">Time before an ongoing distraction escalates to an alert.</p>
+            <input type="range" id="alertDelayInput" min="5" max="30" step="1" value="10" class="w-full accent-alert-red bg-white/10 rounded-lg appearance-none h-2 cursor-pointer">
+          </div>
+        </div>
+      </section>
+
+      <!-- Audio Category -->
+      <section class="space-y-4">
+        <h3 class="font-mono text-sm text-focus-green uppercase tracking-widest flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.898a9 9 0 010 12.728M15.536 8.464l-2.828 2.828m2.828-2.828l-2.828-2.828M15.536 8.464l-2.828 2.828m2.828-2.828l-2.828-2.828m2.828 2.828l2.828-2.828" /></svg>
+          Audio
+        </h3>
+        
+        <div class="glass-panel p-6 border-white/5 space-y-6">
+          <!-- Warning Volume -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label for="warningVolumeInput" class="font-medium text-white/90">Warning Volume</label>
+              <span id="warningVolumeValue" class="font-mono text-sm text-white/50">80%</span>
+            </div>
+            <input type="range" id="warningVolumeInput" min="0" max="100" step="1" value="80" class="w-full accent-white bg-white/10 rounded-lg appearance-none h-2 cursor-pointer">
+          </div>
+
+          <div class="w-full h-px bg-white/5"></div>
+
+          <!-- Sound Enabled -->
+          <div class="flex justify-between items-center">
+            <div>
+              <label class="font-medium text-white/90">Enable Warning Sound</label>
+              <p class="text-xs text-white/40">Play an audio cue when focus is lost.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="soundEnabledInput" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-focus-green"></div>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Camera Category -->
+      <section class="space-y-4">
+        <h3 class="font-mono text-sm text-focus-green uppercase tracking-widest flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          Camera
+        </h3>
+        
+        <div class="glass-panel p-6 border-white/5 space-y-6">
+          <div class="space-y-2">
+            <label for="cameraSelect" class="font-medium text-white/90">Camera Selection</label>
+            <p class="text-xs text-white/40 mb-2">Select the camera used for face tracking.</p>
+            <div class="relative">
+              <select id="cameraSelect" class="w-full bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-focus-green focus:border-focus-green block p-2.5 appearance-none">
+                <option value="">Loading cameras...</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/50">
+                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
+          </div>
+          
+          <div class="space-y-2">
+            <span class="text-xs text-white/50 uppercase tracking-widest">Preview</span>
+            <div class="w-full aspect-video bg-black/40 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden relative">
+              <video id="cameraPreview" class="w-full h-full object-cover hidden" autoplay playsinline muted></video>
+              <div id="cameraPreviewPlaceholder" class="text-white/20 text-sm font-mono flex flex-col items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                <span>Select a camera</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   </main>
 
