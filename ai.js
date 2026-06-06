@@ -49,8 +49,8 @@ async function initAI() {
         maxPredictions = model.getTotalClasses();
 
         // Setup webcam
-        const flip = true; // Whether to flip the webcam
-        webcam = new tmImage.Webcam(320, 240, flip); // width, height, flip
+        const flip = false; // Whether to flip the webcam (handled via CSS now)
+        webcam = new tmImage.Webcam(1280, 720, flip); // width, height, flip
         
         if (webcamStatus) webcamStatus.textContent = "Requesting Camera...";
         
@@ -65,7 +65,12 @@ async function initAI() {
         if (webcamContainer) {
             webcamContainer.appendChild(webcam.canvas);
             // Make canvas fit the container nicely
-            webcam.canvas.classList.add("w-full", "h-full", "object-cover");
+            webcam.canvas.classList.add("w-full", "h-full", "object-contain");
+            
+            // Apply mirror state if available
+            if (window.updateMirrorState) {
+                window.updateMirrorState();
+            }
             
             // Swap visibility
             if (webcamPlaceholder) webcamPlaceholder.classList.add('hidden');

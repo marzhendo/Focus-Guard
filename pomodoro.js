@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     alertDelay: 10,
     warningVolume: 80,
     soundEnabled: true,
-    selectedCamera: null
+    selectedCamera: null,
+    mirrorCamera: true
   };
 
   function loadSettings() {
@@ -516,10 +517,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const warningVolumeInput = document.getElementById('warningVolumeInput');
   const warningVolumeValue = document.getElementById('warningVolumeValue');
   const soundEnabledInput = document.getElementById('soundEnabledInput');
+  const mirrorCameraInput = document.getElementById('mirrorCameraInput');
   const cameraSelect = document.getElementById('cameraSelect');
   const cameraPreview = document.getElementById('cameraPreview');
   const cameraPreviewPlaceholder = document.getElementById('cameraPreviewPlaceholder');
   const btnRestoreDefaults = document.getElementById('btnRestoreDefaults');
+
+  window.updateMirrorState = function() {
+    const transformValue = window.focusGuardSettings.mirrorCamera ? "scaleX(-1)" : "scaleX(1)";
+    
+    // Mirror Settings Preview
+    if (cameraPreview) {
+      cameraPreview.style.transform = transformValue;
+    }
+    
+    // Mirror Dashboard Canvases (both webcam and overlay)
+    const dashboardCanvases = document.querySelectorAll('#webcam-container canvas');
+    dashboardCanvases.forEach(canvas => {
+      canvas.style.transform = transformValue;
+    });
+  };
 
   function updateSettingsUI() {
     if(!warningDelayInput) return;
@@ -534,10 +551,12 @@ document.addEventListener('DOMContentLoaded', () => {
     warningVolumeValue.textContent = window.focusGuardSettings.warningVolume + "%";
     
     soundEnabledInput.checked = window.focusGuardSettings.soundEnabled;
+    if (mirrorCameraInput) mirrorCameraInput.checked = window.focusGuardSettings.mirrorCamera;
     
     if(window.focusGuardSettings.selectedCamera && cameraSelect.options.length > 0) {
       cameraSelect.value = window.focusGuardSettings.selectedCamera;
     }
+    window.updateMirrorState();
   }
 
   function renderSettings() {
@@ -653,6 +672,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if(mirrorCameraInput) {
+    mirrorCameraInput.addEventListener('change', (e) => {
+      window.focusGuardSettings.mirrorCamera = e.target.checked;
+      saveSettings();
+      window.updateMirrorState();
+    });
+  }
+
   if(cameraSelect) {
     cameraSelect.addEventListener('change', (e) => {
       window.focusGuardSettings.selectedCamera = e.target.value;
@@ -724,7 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateStr = new Date(session.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
         
         const scoreColor = session.score >= 90 ? "text-focus-green" : session.score >= 75 ? "text-focus-green" : session.score >= 60 ? "text-warning-yellow" : "text-alert-red";
-        const monColor = session.monitoringConfidence >= 95 ? "text-focus-green" : session.monitoringConfidence >= 80 ? "text-[#EAB308]" : session.monitoringConfidence >= 60 ? "text-warning-yellow" : "text-alert-red";
+        const monColor = session.monitoringConfidence >= 90 ? "text-focus-green" : session.monitoringConfidence >= 70 ? "text-green-400" : session.monitoringConfidence >= 40 ? "text-warning-yellow" : "text-alert-red";
 
         tr.innerHTML = `
           <td class="px-6 py-4 whitespace-nowrap text-white/80">${dateStr}</td>
@@ -770,7 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('detailAlerts').textContent = session.alerts;
 
     // Quality
-    const monColor = session.monitoringConfidence >= 95 ? "font-bold text-focus-green text-sm" : session.monitoringConfidence >= 80 ? "font-bold text-[#EAB308] text-sm" : session.monitoringConfidence >= 60 ? "font-bold text-warning-yellow text-sm" : "font-bold text-alert-red text-sm";
+    const monColor = session.monitoringConfidence >= 90 ? "font-bold text-focus-green text-sm" : session.monitoringConfidence >= 70 ? "font-bold text-green-400 text-sm" : session.monitoringConfidence >= 40 ? "font-bold text-warning-yellow text-sm" : "font-bold text-alert-red text-sm";
     
     document.getElementById('detailQualityLabel').className = monColor;
     document.getElementById('detailQualityPercent').textContent = session.monitoringConfidence + "%";
@@ -934,9 +961,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const faceDetectionRate = Math.round(monitoringConfidence);
     
     let qualityLabel = "";
-    if (faceDetectionRate >= 95) qualityLabel = "Excellent Monitoring";
-    else if (faceDetectionRate >= 80) qualityLabel = "Good Monitoring";
-    else qualityLabel = "Monitoring Quality Low";
+    if (faceDetectionRate >= 90) qualityLabel = "Excellent Monitoring";
+    else if (faceDetectionRate >= 70) qualityLabel = "Good Monitoring";
+    else if (faceDetectionRate >= 40) qualityLabel = "Fair Monitoring";
+    else qualityLabel = "Poor Monitoring";
 
     const insight = generateInsight(m.alertCount, m.warningCount, m.faceLostTime, totalSessionDuration);
 
@@ -1014,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Quality
     const reportQualityLabel = document.getElementById('reportQualityLabel');
     reportQualityLabel.textContent = r.monitoringQuality;
-    reportQualityLabel.className = faceDetectionRate >= 95 ? "font-bold text-focus-green text-sm" : faceDetectionRate >= 80 ? "font-bold text-[#EAB308] text-sm" : faceDetectionRate >= 60 ? "font-bold text-warning-yellow text-sm" : "font-bold text-alert-red text-sm";
+    reportQualityLabel.className = faceDetectionRate >= 90 ? "font-bold text-focus-green text-sm" : faceDetectionRate >= 70 ? "font-bold text-green-400 text-sm" : faceDetectionRate >= 40 ? "font-bold text-warning-yellow text-sm" : "font-bold text-alert-red text-sm";
     
     document.getElementById('reportQualityPercent').textContent = faceDetectionRate + "%";
     

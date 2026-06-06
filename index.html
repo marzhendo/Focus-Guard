@@ -206,7 +206,7 @@
         <!-- Webcam Canvas Container -->
         <div id="webcam-container" class="absolute inset-0 z-20 flex items-center justify-center hidden rounded-lg overflow-hidden relative">
           <!-- Overlay Canvas for Face Bounding Box -->
-          <canvas id="overlayCanvas" width="320" height="240" class="absolute inset-0 w-full h-full object-cover z-30 pointer-events-none"></canvas>
+          <canvas id="overlayCanvas" width="1280" height="720" class="absolute inset-0 w-full h-full object-contain z-30 pointer-events-none"></canvas>
           
           <!-- Face Lost Status UI -->
           <div id="faceLostStatus" class="absolute inset-0 z-40 bg-black/70 flex flex-col items-center justify-center hidden backdrop-blur-sm">
@@ -421,12 +421,24 @@
           <div class="space-y-2">
             <span class="text-xs text-white/50 uppercase tracking-widest">Preview</span>
             <div class="w-full aspect-video bg-black/40 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden relative">
-              <video id="cameraPreview" class="w-full h-full object-cover hidden" autoplay playsinline muted></video>
+              <video id="cameraPreview" class="w-full h-full object-contain hidden" autoplay playsinline muted></video>
               <div id="cameraPreviewPlaceholder" class="text-white/20 text-sm font-mono flex flex-col items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                 <span>Select a camera</span>
               </div>
             </div>
+          </div>
+
+          <!-- Mirror Camera -->
+          <div class="flex justify-between items-center mt-4 border-t border-white/5 pt-4">
+            <div>
+              <label class="font-medium text-white/90">Mirror Camera</label>
+              <p class="text-xs text-white/40">Mirror camera preview for easier positioning.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="mirrorCameraInput" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-focus-green"></div>
+            </label>
           </div>
         </div>
       </section>
