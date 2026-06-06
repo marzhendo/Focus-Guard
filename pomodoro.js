@@ -426,14 +426,100 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Sidebar link prevention for demo purposes
-  const navLinks = document.querySelectorAll('aside nav a');
-  navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
+  // --- ANALYTICS DASHBOARD MANAGER ---
+  const navDashboard = document.getElementById('nav-dashboard');
+  const navAnalytics = document.getElementById('nav-analytics');
+  const mainDashboard = document.getElementById('main-dashboard');
+  const mainAnalytics = document.getElementById('main-analytics');
+
+  if (navDashboard && navAnalytics) {
+    navDashboard.addEventListener('click', (e) => {
       e.preventDefault();
-      console.log('Navigation feature disabled in this phase.');
+      navDashboard.classList.add('bg-white/5', 'text-focus-green');
+      navDashboard.classList.remove('text-white/50');
+      navAnalytics.classList.remove('bg-white/5', 'text-focus-green');
+      navAnalytics.classList.add('text-white/50');
+      
+      mainDashboard.classList.remove('hidden');
+      mainAnalytics.classList.add('hidden');
     });
-  });
+
+    navAnalytics.addEventListener('click', (e) => {
+      e.preventDefault();
+      navAnalytics.classList.add('bg-white/5', 'text-focus-green');
+      navAnalytics.classList.remove('text-white/50');
+      navDashboard.classList.remove('bg-white/5', 'text-focus-green');
+      navDashboard.classList.add('text-white/50');
+      
+      mainDashboard.classList.add('hidden');
+      mainAnalytics.classList.remove('hidden');
+      
+      renderAnalytics();
+    });
+  }
+
+  function renderAnalytics() {
+    const history = loadSessionHistory();
+    const emptyState = document.getElementById('analytics-empty-state');
+    const content = document.getElementById('analytics-content');
+    
+    if (!history || history.length === 0) {
+      if(emptyState) emptyState.classList.remove('hidden');
+      if(content) content.classList.add('hidden');
+      return;
+    }
+    
+    if(emptyState) emptyState.classList.add('hidden');
+    if(content) content.classList.remove('hidden');
+
+    let totalScore = 0;
+    let totalMonitoring = 0;
+    let bestScore = 0;
+    
+    history.forEach(session => {
+      totalScore += session.score || 0;
+      totalMonitoring += session.monitoringConfidence || 0;
+      if ((session.score || 0) > bestScore) {
+        bestScore = session.score || 0;
+      }
+    });
+
+    const avgScore = Math.round(totalScore / history.length);
+    const avgMonitoring = Math.round(totalMonitoring / history.length);
+
+    document.getElementById('kpi-avg-score').textContent = avgScore;
+    document.getElementById('kpi-avg-monitoring').textContent = avgMonitoring + "%";
+    document.getElementById('kpi-total-sessions').textContent = history.length;
+    document.getElementById('kpi-best-score').textContent = bestScore;
+
+    // Render Table
+    const tbody = document.getElementById('analytics-table-body');
+    if(tbody) {
+      tbody.innerHTML = '';
+      
+      // Sort descending by timestamp
+      const sortedHistory = [...history].sort((a, b) => b.timestamp - a.timestamp);
+
+      sortedHistory.forEach(session => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-white/5 transition-colors";
+        
+        const dateStr = new Date(session.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+        
+        const scoreColor = session.score >= 90 ? "text-focus-green" : session.score >= 75 ? "text-focus-green" : session.score >= 60 ? "text-warning-yellow" : "text-alert-red";
+        const monColor = session.monitoringConfidence >= 95 ? "text-focus-green" : session.monitoringConfidence >= 80 ? "text-[#EAB308]" : session.monitoringConfidence >= 60 ? "text-warning-yellow" : "text-alert-red";
+
+        tr.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap text-white/80">${dateStr}</td>
+          <td class="px-6 py-4 whitespace-nowrap"><span class="font-bold ${scoreColor}">${session.score}</span></td>
+          <td class="px-6 py-4 whitespace-nowrap"><span class="${monColor}">${session.monitoringConfidence}%</span></td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-white/60">${session.warnings}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-white/60">${session.alerts}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  }
 
   // Initialize timer display on page load
   updateDisplay();
@@ -453,6 +539,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return "Excellent sustained concentration throughout the session.";
     }
     return "Good session with typical amounts of brief distraction.";
+  }
+
+  // --- SESSION HISTORY MANAGER ---
+  function loadSessionHistory() {
+    try {
+      const data = localStorage.getItem("focusGuardHistory");
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveSessionHistory(historyArray) {
+    try {
+      localStorage.setItem("focusGuardHistory", JSON.stringify(historyArray));
+    } catch (e) {
+      console.warn("Gagal menyimpan ke LocalStorage", e);
+    }
   }
 
   function generateSessionReport(title) {
@@ -486,15 +590,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('reportContentContainer').classList.remove('hidden');
     document.getElementById('reportEdgeWarning').classList.add('hidden');
 
-    const focusRatio = totalActiveTime > 0 ? (m.focusTime / totalActiveTime) : 0;
+    const observedTime = m.focusTime + m.distractedTime;
+    let focusRatio = 0;
+    
+    if (observedTime > 0) {
+        focusRatio = m.focusTime / observedTime;
+    }
+    
     let baseScore = focusRatio * 100;
-
     const warningPenalty = m.warningCount * 2;
     const alertPenalty = m.alertCount * 5;
-    const faceLostPenalty = m.faceLostTime * 0.2;
-
-    let finalScore = Math.round(baseScore - warningPenalty - alertPenalty - faceLostPenalty);
-    finalScore = Math.max(0, Math.min(finalScore, 100));
+    
+    let finalScore = Math.round(baseScore - warningPenalty - alertPenalty);
+    finalScore = Math.max(0, Math.min(finalScore, 100)); // Clamp ke 0-100
 
     let categoryTitle = "";
     let badgeText = "";
@@ -519,13 +627,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Monitoring Quality
-    const faceDetectionRate = ((totalSessionDuration - m.faceLostTime) / totalSessionDuration) * 100;
+    const monitoringConfidence = ((totalSessionDuration - m.faceLostTime) / totalSessionDuration) * 100;
+    const faceDetectionRate = Math.round(monitoringConfidence);
+    
     let qualityLabel = "";
     if (faceDetectionRate >= 95) qualityLabel = "Excellent Monitoring";
     else if (faceDetectionRate >= 80) qualityLabel = "Good Monitoring";
     else qualityLabel = "Monitoring Quality Low";
 
     const insight = generateInsight(m.alertCount, m.warningCount, m.faceLostTime, totalSessionDuration);
+
+    const focusPercentage = Math.round(focusRatio * 100);
 
     window.sessionReport = {
       score: finalScore,
@@ -540,10 +652,31 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionEvents: m.sessionEvents
     };
 
-    showSessionReport(title, categoryTitle, colorClass, faceDetectionRate, totalActiveTime, totalSessionDuration);
+    // Save to LocalStorage
+    const history = loadSessionHistory();
+    history.push({
+      id: "session_" + Date.now(),
+      timestamp: Date.now(),
+      score: finalScore,
+      monitoringConfidence: faceDetectionRate,
+      sessionDuration: totalSessionDuration,
+      focusTime: m.focusTime,
+      distractedTime: m.distractedTime,
+      faceLostTime: m.faceLostTime,
+      focusPercentage: focusPercentage,
+      warnings: m.warningCount,
+      alerts: m.alertCount
+    });
+
+    if (history.length > 20) {
+      history.shift();
+    }
+    saveSessionHistory(history);
+
+    showSessionReport(title, categoryTitle, colorClass, faceDetectionRate, totalActiveTime, totalSessionDuration, focusPercentage);
   }
 
-  function showSessionReport(title, categoryTitle, colorClass, faceDetectionRate, totalActiveTime, totalSessionDuration) {
+  function showSessionReport(title, categoryTitle, colorClass, faceDetectionRate, totalActiveTime, totalSessionDuration, focusPercentage) {
     const modal = document.getElementById('sessionReportModal');
     const r = window.sessionReport;
 
@@ -573,8 +706,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('reportAlerts').textContent = r.alertCount;
 
     // Quality
-    document.getElementById('reportQualityLabel').textContent = r.monitoringQuality;
-    document.getElementById('reportQualityPercent').textContent = Math.round(faceDetectionRate) + "%";
+    const reportQualityLabel = document.getElementById('reportQualityLabel');
+    reportQualityLabel.textContent = r.monitoringQuality;
+    reportQualityLabel.className = faceDetectionRate >= 95 ? "font-bold text-focus-green text-sm" : faceDetectionRate >= 80 ? "font-bold text-[#EAB308] text-sm" : faceDetectionRate >= 60 ? "font-bold text-warning-yellow text-sm" : "font-bold text-alert-red text-sm";
+    
+    document.getElementById('reportQualityPercent').textContent = faceDetectionRate + "%";
     
     const qualWarn = document.getElementById('reportQualityWarning');
     if (r.faceLostTime > 0.2 * totalSessionDuration) {
@@ -587,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let focusPct = 0;
     let distPct = 0;
     if (totalActiveTime > 0) {
-      focusPct = Math.round((r.focusTime / totalActiveTime) * 100);
+      focusPct = focusPercentage;
       distPct = 100 - focusPct;
     }
     document.getElementById('reportFocusPercent').textContent = focusPct + "%";
