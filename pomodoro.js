@@ -21,6 +21,42 @@ document.addEventListener('DOMContentLoaded', () => {
   let timerInterval = null;
   let timeRemaining = 25 * 60; // default 25 minutes in seconds
 
+  // --- Session Metrics Engine ---
+  window.sessionMetrics = {
+    isActive: false,
+    focusTime: 0,
+    distractedTime: 0,
+    faceLostTime: 0,
+    warningCount: 0,
+    alertCount: 0,
+    sessionEvents: []
+  };
+  
+  window.sessionReport = {
+    score: 0,
+    focusTime: 0,
+    distractedTime: 0,
+    faceLostTime: 0,
+    warningCount: 0,
+    alertCount: 0,
+    badge: null,
+    insight: null,
+    monitoringQuality: null,
+    sessionEvents: []
+  };
+
+  let latestTelemetry = { isFaceLost: false };
+
+  // Track session duration elapsed
+  let sessionTotalDurationSet = 25 * 60;
+
+  function getCurrentSessionTime() {
+    const elapsed = sessionTotalDurationSet - timeRemaining;
+    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const s = (elapsed % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
   // --- DOM Elements ---
   const timerDisplay = document.getElementById('timerDisplay');
   const btnStart = document.getElementById('btnStart');
@@ -148,7 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if (newState === STATES.IDLE) {
-      timeRemaining = 25 * 60;
+      sessionTotalDurationSet = 25 * 60;
+      timeRemaining = sessionTotalDurationSet;
       updateDisplay();
       resetTelemetry();
       
@@ -167,10 +204,15 @@ document.addEventListener('DOMContentLoaded', () => {
       setThemeColor('focus-green');
     }
     else if (newState === STATES.WARNING) {
+      if (prevState !== STATES.WARNING) {
+        window.sessionMetrics.warningCount++;
+        window.sessionMetrics.sessionEvents.push({ type: "WARNING", timestamp: getCurrentSessionTime() });
+      }
       enterWarningState();
     }
     else if (newState === STATES.BREAK_TIME) {
-      timeRemaining = 5 * 60;
+      sessionTotalDurationSet = 5 * 60;
+      timeRemaining = sessionTotalDurationSet;
       updateDisplay();
       resetTelemetry();
       
@@ -181,6 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
       setThemeColor('break-blue');
     }
     else if (newState === STATES.ALERT) {
+      if (prevState !== STATES.ALERT) {
+        window.sessionMetrics.alertCount++;
+        window.sessionMetrics.sessionEvents.push({ type: "ALERT", timestamp: getCurrentSessionTime() });
+      }
       enterAlertState();
     }
   }
@@ -264,6 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
     telStatus.classList.remove('text-focus-green', 'text-warning-yellow', 'text-alert-red', 'text-white/70');
     telProgressBar.classList.remove('bg-focus-green', 'bg-warning-yellow', 'bg-alert-red', 'bg-white/50');
 
+    latestTelemetry.isFaceLost = data.isFaceLost;
+
     if (data.isFaceLost) {
       telStatus.textContent = "FACE NOT DETECTED";
       telStatus.classList.add('text-warning-yellow');
@@ -311,12 +359,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Timer Logic ---
   function tick() {
+    // Metrics tracking
+    if (window.sessionMetrics.isActive) {
+      if (latestTelemetry.isFaceLost) {
+        window.sessionMetrics.faceLostTime++;
+      } else {
+        if (currentState === STATES.FOCUS_ACTIVE) {
+          window.sessionMetrics.focusTime++;
+        } else if (currentState === STATES.WARNING || currentState === STATES.ALERT) {
+          window.sessionMetrics.distractedTime++;
+        }
+      }
+    }
+
     if (timeRemaining > 0) {
       timeRemaining--;
       updateDisplay();
     } else {
       // Timer reached 00:00
       if (currentState === STATES.FOCUS_ACTIVE || currentState === STATES.WARNING || currentState === STATES.ALERT) {
+        generateSessionReport("SESSION COMPLETE");
         changeState(STATES.BREAK_TIME);
         startTimer(); // Auto-start the 5 min break timer
       } else if (currentState === STATES.BREAK_TIME) {
@@ -330,11 +392,19 @@ document.addEventListener('DOMContentLoaded', () => {
     timerInterval = setInterval(tick, 1000);
   }
 
-  // --- Event Listeners ---
   if (btnStart) {
     btnStart.addEventListener('click', () => {
       console.log('Tombol Start di-klik');
       if (currentState === STATES.IDLE) {
+        window.sessionMetrics = {
+          isActive: true,
+          focusTime: 0,
+          distractedTime: 0,
+          faceLostTime: 0,
+          warningCount: 0,
+          alertCount: 0,
+          sessionEvents: [{ type: "SESSION_START", timestamp: "00:00" }]
+        };
         changeState(STATES.FOCUS_ACTIVE);
       }
       startTimer();
@@ -351,6 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnAbort) {
     btnAbort.addEventListener('click', () => {
       console.log('Tombol Abort di-klik');
+      generateSessionReport("SESSION ABORTED");
       changeState(STATES.IDLE);
     });
   }
@@ -366,6 +437,198 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize timer display on page load
   updateDisplay();
+
+  // --- SESSION REPORT MANAGER ---
+  function generateInsight(alertCount, warningCount, faceLostTime, totalSessionDuration) {
+    if (faceLostTime > 0.2 * totalSessionDuration) {
+      return "Monitoring reliability was reduced because the face was frequently not visible.";
+    }
+    if (alertCount > 0) {
+      return "Multiple prolonged distractions occurred during the session.";
+    }
+    if (warningCount > 3) {
+      return "Frequent attention shifts were detected.";
+    }
+    if (alertCount === 0 && warningCount <= 2) {
+      return "Excellent sustained concentration throughout the session.";
+    }
+    return "Good session with typical amounts of brief distraction.";
+  }
+
+  function generateSessionReport(title) {
+    if (!window.sessionMetrics.isActive) return;
+    window.sessionMetrics.isActive = false; // Stop tracking
+
+    window.sessionMetrics.sessionEvents.push({ type: "SESSION_COMPLETE", timestamp: getCurrentSessionTime() });
+
+    const m = window.sessionMetrics;
+    const totalActiveTime = m.focusTime + m.distractedTime;
+    const totalSessionDuration = totalActiveTime + m.faceLostTime;
+
+    const modal = document.getElementById('sessionReportModal');
+    if (!modal) return;
+
+    if (totalSessionDuration < 60) {
+      document.getElementById('reportContentContainer').classList.add('hidden');
+      document.getElementById('reportEdgeWarning').classList.remove('hidden');
+      
+      const h3 = modal.querySelector('#reportTitle');
+      const p = modal.querySelector('#reportRating');
+      if(h3) h3.textContent = title;
+      if(p) {
+        p.textContent = "Score Not Available";
+        p.className = "font-mono text-sm font-bold text-white/50";
+      }
+      modal.classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('reportContentContainer').classList.remove('hidden');
+    document.getElementById('reportEdgeWarning').classList.add('hidden');
+
+    const focusRatio = totalActiveTime > 0 ? (m.focusTime / totalActiveTime) : 0;
+    let baseScore = focusRatio * 100;
+
+    const warningPenalty = m.warningCount * 2;
+    const alertPenalty = m.alertCount * 5;
+    const faceLostPenalty = m.faceLostTime * 0.2;
+
+    let finalScore = Math.round(baseScore - warningPenalty - alertPenalty - faceLostPenalty);
+    finalScore = Math.max(0, Math.min(finalScore, 100));
+
+    let categoryTitle = "";
+    let badgeText = "";
+    let colorClass = "";
+    
+    if (finalScore >= 90) {
+      categoryTitle = "Excellent Focus";
+      badgeText = "🏆 Deep Work Master";
+      colorClass = "text-focus-green";
+    } else if (finalScore >= 75) {
+      categoryTitle = "Good Focus";
+      badgeText = "✅ Productive Session";
+      colorClass = "text-focus-green"; 
+    } else if (finalScore >= 60) {
+      categoryTitle = "Needs Improvement";
+      badgeText = "⚠ Needs More Consistency";
+      colorClass = "text-warning-yellow";
+    } else {
+      categoryTitle = "Poor Focus";
+      badgeText = "🔄 Refocus Required";
+      colorClass = "text-alert-red";
+    }
+
+    // Monitoring Quality
+    const faceDetectionRate = ((totalSessionDuration - m.faceLostTime) / totalSessionDuration) * 100;
+    let qualityLabel = "";
+    if (faceDetectionRate >= 95) qualityLabel = "Excellent Monitoring";
+    else if (faceDetectionRate >= 80) qualityLabel = "Good Monitoring";
+    else qualityLabel = "Monitoring Quality Low";
+
+    const insight = generateInsight(m.alertCount, m.warningCount, m.faceLostTime, totalSessionDuration);
+
+    window.sessionReport = {
+      score: finalScore,
+      focusTime: m.focusTime,
+      distractedTime: m.distractedTime,
+      faceLostTime: m.faceLostTime,
+      warningCount: m.warningCount,
+      alertCount: m.alertCount,
+      badge: badgeText,
+      insight: insight,
+      monitoringQuality: qualityLabel,
+      sessionEvents: m.sessionEvents
+    };
+
+    showSessionReport(title, categoryTitle, colorClass, faceDetectionRate, totalActiveTime, totalSessionDuration);
+  }
+
+  function showSessionReport(title, categoryTitle, colorClass, faceDetectionRate, totalActiveTime, totalSessionDuration) {
+    const modal = document.getElementById('sessionReportModal');
+    const r = window.sessionReport;
+
+    document.getElementById('reportTitle').textContent = title;
+    
+    const pRating = document.getElementById('reportRating');
+    pRating.textContent = categoryTitle;
+    pRating.className = `font-mono text-sm font-bold ${colorClass}`;
+
+    document.getElementById('reportScoreValue').textContent = r.score;
+    document.getElementById('reportScoreValue').className = `text-7xl font-display font-bold tabular-nums drop-shadow-md ${colorClass}`;
+    
+    const badgeEl = document.getElementById('reportBadge');
+    badgeEl.textContent = r.badge;
+    badgeEl.className = `px-4 py-1.5 rounded-full border font-mono text-sm tracking-wide ${colorClass} border-current bg-black/30 text-center`;
+
+    const formatDur = (s) => {
+      const min = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return min > 0 ? `${min}m ${sec}s` : `${sec}s`;
+    };
+
+    document.getElementById('reportFocusTime').textContent = formatDur(r.focusTime);
+    document.getElementById('reportDistractedTime').textContent = formatDur(r.distractedTime);
+    document.getElementById('reportFaceLostTime').textContent = formatDur(r.faceLostTime);
+    document.getElementById('reportWarnings').textContent = r.warningCount;
+    document.getElementById('reportAlerts').textContent = r.alertCount;
+
+    // Quality
+    document.getElementById('reportQualityLabel').textContent = r.monitoringQuality;
+    document.getElementById('reportQualityPercent').textContent = Math.round(faceDetectionRate) + "%";
+    
+    const qualWarn = document.getElementById('reportQualityWarning');
+    if (r.faceLostTime > 0.2 * totalSessionDuration) {
+      qualWarn.classList.remove('hidden');
+    } else {
+      qualWarn.classList.add('hidden');
+    }
+
+    // Progress Bars
+    let focusPct = 0;
+    let distPct = 0;
+    if (totalActiveTime > 0) {
+      focusPct = Math.round((r.focusTime / totalActiveTime) * 100);
+      distPct = 100 - focusPct;
+    }
+    document.getElementById('reportFocusPercent').textContent = focusPct + "%";
+    document.getElementById('reportFocusBar').style.width = focusPct + "%";
+    document.getElementById('reportDistractPercent').textContent = distPct + "%";
+    document.getElementById('reportDistractBar').style.width = distPct + "%";
+
+    // Insight
+    document.getElementById('reportInsightText').textContent = r.insight;
+
+    // Timeline
+    const tlContainer = document.getElementById('reportTimeline');
+    tlContainer.innerHTML = '';
+    r.sessionEvents.forEach(ev => {
+      let color = "text-white/80";
+      if (ev.type === "WARNING") color = "text-warning-yellow";
+      if (ev.type === "ALERT") color = "text-alert-red";
+      if (ev.type === "SESSION_START" || ev.type === "SESSION_COMPLETE") color = "text-focus-green";
+
+      const div = document.createElement('div');
+      div.className = "flex gap-4 border-b border-white/5 pb-2 last:border-0";
+      div.innerHTML = `<span class="text-white/40 min-w-[40px]">${ev.timestamp}</span><span class="${color}">${ev.type.replace('_', ' ')}</span>`;
+      tlContainer.appendChild(div);
+    });
+
+    modal.classList.remove('hidden');
+  }
+
+  // Modal event listeners
+  const btnCloseModal = document.getElementById('btnCloseModal');
+  const btnNewSession = document.getElementById('btnNewSession');
+  const modal = document.getElementById('sessionReportModal');
+  if (btnCloseModal && modal) {
+    btnCloseModal.addEventListener('click', () => modal.classList.add('hidden'));
+  }
+  if (btnNewSession && modal) {
+    btnNewSession.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      changeState(STATES.IDLE);
+    });
+  }
 
   // --- EXPORT GLOBALS FOR AI.JS ---
   window.getCurrentState = () => currentState;
