@@ -53,7 +53,12 @@ async function initAI() {
         webcam = new tmImage.Webcam(320, 240, flip); // width, height, flip
         
         if (webcamStatus) webcamStatus.textContent = "Requesting Camera...";
-        await webcam.setup(); // Request access to the webcam
+        
+        let setupOptions = undefined;
+        if (window.focusGuardSettings && window.focusGuardSettings.selectedCamera) {
+             setupOptions = { deviceId: window.focusGuardSettings.selectedCamera };
+        }
+        await webcam.setup(setupOptions); // Request access to the webcam
         await webcam.play();
         
         // Append elements to the DOM

@@ -1,10 +1,38 @@
 // pomodoro.js
 
 document.addEventListener('DOMContentLoaded', () => {
+  // --- Settings Storage Manager ---
+  const defaultSettings = {
+    warningDelay: 5,
+    alertDelay: 10,
+    warningVolume: 80,
+    soundEnabled: true,
+    selectedCamera: null
+  };
+
+  function loadSettings() {
+    try {
+      const data = localStorage.getItem("focusGuardSettings");
+      return data ? { ...defaultSettings, ...JSON.parse(data) } : { ...defaultSettings };
+    } catch {
+      return { ...defaultSettings };
+    }
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem("focusGuardSettings", JSON.stringify(window.focusGuardSettings));
+    } catch (e) {
+      console.warn("Gagal menyimpan Settings ke LocalStorage", e);
+    }
+  }
+
+  window.focusGuardSettings = loadSettings();
+
   // --- Configuration ---
   window.DISTRACTION_CONFIG = {
-    warningThreshold: 5,
-    alertThreshold: 10
+    get warningThreshold() { return window.focusGuardSettings.warningDelay; },
+    get alertThreshold() { return window.focusGuardSettings.alertDelay; }
   };
 
   // --- Global States ---
@@ -100,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function startAlarm() {
     if (alarmInterval) return; // already playing
+    if (!window.focusGuardSettings.soundEnabled) return;
     
     try {
       if (!audioCtx) {
@@ -121,7 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
         oscillator.type = 'sawtooth';
         oscillator.frequency.setValueAtTime(toggle ? 800 : 400, audioCtx.currentTime); 
         
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        let volume = (window.focusGuardSettings.warningVolume / 100) * 0.1; // scale 0.1 max
+        gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
         
         oscillator.start();
@@ -426,35 +456,217 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- ANALYTICS DASHBOARD MANAGER ---
+  // --- NAVIGATION MANAGER ---
   const navDashboard = document.getElementById('nav-dashboard');
   const navAnalytics = document.getElementById('nav-analytics');
+  const navSettings = document.getElementById('nav-settings');
   const mainDashboard = document.getElementById('main-dashboard');
   const mainAnalytics = document.getElementById('main-analytics');
+  const mainSettings = document.getElementById('main-settings');
 
-  if (navDashboard && navAnalytics) {
+  function clearNav() {
+    [navDashboard, navAnalytics, navSettings].forEach(nav => {
+      if(nav) {
+        nav.classList.remove('bg-white/5', 'text-focus-green');
+        nav.classList.add('text-white/50');
+      }
+    });
+    [mainDashboard, mainAnalytics, mainSettings].forEach(main => {
+      if(main) main.classList.add('hidden');
+    });
+  }
+
+  if (navDashboard) {
     navDashboard.addEventListener('click', (e) => {
       e.preventDefault();
+      clearNav();
       navDashboard.classList.add('bg-white/5', 'text-focus-green');
       navDashboard.classList.remove('text-white/50');
-      navAnalytics.classList.remove('bg-white/5', 'text-focus-green');
-      navAnalytics.classList.add('text-white/50');
-      
       mainDashboard.classList.remove('hidden');
-      mainAnalytics.classList.add('hidden');
     });
+  }
 
+  if (navAnalytics) {
     navAnalytics.addEventListener('click', (e) => {
       e.preventDefault();
+      clearNav();
       navAnalytics.classList.add('bg-white/5', 'text-focus-green');
       navAnalytics.classList.remove('text-white/50');
-      navDashboard.classList.remove('bg-white/5', 'text-focus-green');
-      navDashboard.classList.add('text-white/50');
-      
-      mainDashboard.classList.add('hidden');
       mainAnalytics.classList.remove('hidden');
-      
       renderAnalytics();
+    });
+  }
+  
+  if (navSettings) {
+    navSettings.addEventListener('click', (e) => {
+      e.preventDefault();
+      clearNav();
+      navSettings.classList.add('bg-white/5', 'text-focus-green');
+      navSettings.classList.remove('text-white/50');
+      mainSettings.classList.remove('hidden');
+      renderSettings();
+    });
+  }
+
+  // --- SETTINGS UI MANAGER ---
+  const warningDelayInput = document.getElementById('warningDelayInput');
+  const warningDelayValue = document.getElementById('warningDelayValue');
+  const alertDelayInput = document.getElementById('alertDelayInput');
+  const alertDelayValue = document.getElementById('alertDelayValue');
+  const warningVolumeInput = document.getElementById('warningVolumeInput');
+  const warningVolumeValue = document.getElementById('warningVolumeValue');
+  const soundEnabledInput = document.getElementById('soundEnabledInput');
+  const cameraSelect = document.getElementById('cameraSelect');
+  const cameraPreview = document.getElementById('cameraPreview');
+  const cameraPreviewPlaceholder = document.getElementById('cameraPreviewPlaceholder');
+  const btnRestoreDefaults = document.getElementById('btnRestoreDefaults');
+
+  function updateSettingsUI() {
+    if(!warningDelayInput) return;
+    
+    warningDelayInput.value = window.focusGuardSettings.warningDelay;
+    warningDelayValue.textContent = window.focusGuardSettings.warningDelay + "s";
+    
+    alertDelayInput.value = window.focusGuardSettings.alertDelay;
+    alertDelayValue.textContent = window.focusGuardSettings.alertDelay + "s";
+    
+    warningVolumeInput.value = window.focusGuardSettings.warningVolume;
+    warningVolumeValue.textContent = window.focusGuardSettings.warningVolume + "%";
+    
+    soundEnabledInput.checked = window.focusGuardSettings.soundEnabled;
+    
+    if(window.focusGuardSettings.selectedCamera && cameraSelect.options.length > 0) {
+      cameraSelect.value = window.focusGuardSettings.selectedCamera;
+    }
+  }
+
+  function renderSettings() {
+    updateSettingsUI();
+    loadCameras();
+  }
+
+  function loadCameras() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      console.warn("enumerateDevices not supported.");
+      return;
+    }
+    
+    navigator.mediaDevices.enumerateDevices()
+      .then(devices => {
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        cameraSelect.innerHTML = ''; // clear loading
+        
+        if (videoDevices.length === 0) {
+          const opt = document.createElement('option');
+          opt.value = "";
+          opt.text = "No camera found";
+          cameraSelect.appendChild(opt);
+          return;
+        }
+
+        videoDevices.forEach(device => {
+          const opt = document.createElement('option');
+          opt.value = device.deviceId;
+          opt.text = device.label || `Camera ${cameraSelect.length + 1}`;
+          cameraSelect.appendChild(opt);
+        });
+
+        // Set to current or first
+        if (window.focusGuardSettings.selectedCamera && [...cameraSelect.options].some(o => o.value === window.focusGuardSettings.selectedCamera)) {
+          cameraSelect.value = window.focusGuardSettings.selectedCamera;
+        } else if (videoDevices.length > 0) {
+          window.focusGuardSettings.selectedCamera = videoDevices[0].deviceId;
+          cameraSelect.value = videoDevices[0].deviceId;
+          saveSettings();
+        }
+
+        updateCameraPreview();
+      })
+      .catch(err => {
+        console.error("Error enumerating devices:", err);
+      });
+  }
+
+  let previewStream = null;
+  function updateCameraPreview() {
+    const deviceId = cameraSelect.value;
+    if(!deviceId) return;
+    
+    if(previewStream) {
+      previewStream.getTracks().forEach(t => t.stop());
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } })
+      .then(stream => {
+        previewStream = stream;
+        cameraPreview.srcObject = stream;
+        cameraPreview.classList.remove('hidden');
+        cameraPreviewPlaceholder.classList.add('hidden');
+      })
+      .catch(err => {
+        console.error("Preview error", err);
+        cameraPreview.classList.add('hidden');
+        cameraPreviewPlaceholder.classList.remove('hidden');
+      });
+  }
+
+  // Bind Listeners
+  if(warningDelayInput) {
+    warningDelayInput.addEventListener('input', (e) => {
+      let val = parseInt(e.target.value);
+      if(val >= parseInt(alertDelayInput.value)) {
+         val = parseInt(alertDelayInput.value) - 1;
+         e.target.value = val;
+      }
+      warningDelayValue.textContent = val + "s";
+      window.focusGuardSettings.warningDelay = val;
+      saveSettings();
+    });
+  }
+
+  if(alertDelayInput) {
+    alertDelayInput.addEventListener('input', (e) => {
+      let val = parseInt(e.target.value);
+      if(val <= parseInt(warningDelayInput.value)) {
+         val = parseInt(warningDelayInput.value) + 1;
+         e.target.value = val;
+      }
+      alertDelayValue.textContent = val + "s";
+      window.focusGuardSettings.alertDelay = val;
+      saveSettings();
+    });
+  }
+
+  if(warningVolumeInput) {
+    warningVolumeInput.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      warningVolumeValue.textContent = val + "%";
+      window.focusGuardSettings.warningVolume = val;
+      saveSettings();
+    });
+  }
+
+  if(soundEnabledInput) {
+    soundEnabledInput.addEventListener('change', (e) => {
+      window.focusGuardSettings.soundEnabled = e.target.checked;
+      saveSettings();
+    });
+  }
+
+  if(cameraSelect) {
+    cameraSelect.addEventListener('change', (e) => {
+      window.focusGuardSettings.selectedCamera = e.target.value;
+      saveSettings();
+      updateCameraPreview();
+    });
+  }
+
+  if(btnRestoreDefaults) {
+    btnRestoreDefaults.addEventListener('click', () => {
+      window.focusGuardSettings = { ...defaultSettings };
+      saveSettings();
+      updateSettingsUI();
+      updateCameraPreview(); // might change device
     });
   }
 
