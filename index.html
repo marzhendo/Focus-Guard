@@ -252,6 +252,131 @@
     </div>
   </main>
 
-  
+  <!-- Session Report Modal v1 -->
+  <div id="sessionReportModal" class="fixed inset-0 z-[100] bg-bg-deep/90 backdrop-blur-md flex items-center justify-center hidden overflow-y-auto py-8">
+    <div class="glass-panel w-full max-w-2xl my-auto p-8 flex flex-col gap-8 relative shadow-2xl transition-all">
+      <!-- Close Button (X) -->
+      <button id="btnCloseModal" class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Header -->
+      <div class="text-center space-y-1 border-b border-white/10 pb-6">
+        <h3 id="reportTitle" class="font-display text-2xl font-bold tracking-widest text-white/90 uppercase">SESSION REPORT</h3>
+        <p id="reportRating" class="font-mono text-sm font-bold text-focus-green">Excellent Focus</p>
+      </div>
+
+      <div id="reportContentContainer" class="flex flex-col gap-8">
+        <!-- Top Row: Score & Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Focus Score Section -->
+          <div class="flex flex-col items-center justify-center space-y-4 bg-black/20 p-6 rounded-lg border border-white/5">
+            <p class="font-mono text-xs text-white/50 uppercase tracking-widest">FOCUS SCORE</p>
+            <div class="flex items-baseline gap-2">
+              <span id="reportScoreValue" class="text-7xl font-display font-bold text-focus-green tabular-nums drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]">0</span>
+              <span class="text-xl font-mono text-white/30">/100</span>
+            </div>
+            <div id="reportBadge" class="px-4 py-1.5 rounded-full bg-focus-green/10 border border-focus-green/30 text-focus-green font-mono text-sm tracking-wide text-center">
+              🏆 Deep Work Master
+            </div>
+          </div>
+
+          <!-- Statistics Section -->
+          <div class="flex flex-col justify-center space-y-3 bg-black/20 p-6 rounded-lg border border-white/5 font-mono text-sm">
+            <div class="flex justify-between items-center">
+              <span class="text-white/60">Focus Time</span>
+              <span id="reportFocusTime" class="text-white font-bold">0m 0s</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-white/60">Distracted</span>
+              <span id="reportDistractedTime" class="text-white font-bold">0m 0s</span>
+            </div>
+            <div class="flex justify-between items-center pb-3 border-b border-white/5">
+              <span class="text-white/60">Face Lost</span>
+              <span id="reportFaceLostTime" class="text-white font-bold">0s</span>
+            </div>
+            <div class="flex justify-between items-center pt-1">
+              <span class="text-white/60">Warnings</span>
+              <span id="reportWarnings" class="text-warning-yellow font-bold drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]">0</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-white/60">Alerts</span>
+              <span id="reportAlerts" class="text-alert-red font-bold drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monitoring Quality & Focus Distribution -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Monitoring Quality -->
+          <div class="bg-black/20 p-5 rounded-lg border border-white/5 flex flex-col justify-center space-y-4">
+            <p class="font-mono text-xs text-white/50 uppercase tracking-widest border-b border-white/10 pb-2">Monitoring Quality</p>
+            <div class="flex justify-between items-end">
+              <span id="reportQualityLabel" class="font-bold text-focus-green text-sm">Excellent Monitoring</span>
+              <span id="reportQualityPercent" class="font-mono font-bold text-2xl text-white">100%</span>
+            </div>
+            <p id="reportQualityWarning" class="text-xs text-warning-yellow hidden">⚠ Score accuracy may be reduced</p>
+          </div>
+
+          <!-- Focus Distribution -->
+          <div class="bg-black/20 p-5 rounded-lg border border-white/5 space-y-4 flex flex-col justify-center">
+            <p class="font-mono text-xs text-white/50 uppercase tracking-widest border-b border-white/10 pb-2">Focus Distribution</p>
+            
+            <div class="space-y-1">
+              <div class="flex justify-between font-mono text-xs">
+                <span class="text-focus-green">Focus</span>
+                <span id="reportFocusPercent" class="text-white">0%</span>
+              </div>
+              <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden flex">
+                <div id="reportFocusBar" class="h-full bg-focus-green transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex justify-between font-mono text-xs">
+                <span class="text-warning-yellow">Distracted</span>
+                <span id="reportDistractPercent" class="text-white">0%</span>
+              </div>
+              <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden flex">
+                <div id="reportDistractBar" class="h-full bg-warning-yellow transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Insight Section -->
+        <div class="bg-focus-green/5 border border-focus-green/20 rounded-lg p-5 relative overflow-hidden">
+          <div class="absolute top-0 left-0 w-1 h-full bg-focus-green"></div>
+          <p class="font-mono text-xs text-focus-green uppercase tracking-widest mb-2 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            AI Insight
+          </p>
+          <p id="reportInsightText" class="text-sm text-white/90 leading-relaxed font-body">Generating insight...</p>
+        </div>
+
+        <!-- Event Timeline Section -->
+        <div class="bg-black/20 rounded-lg border border-white/5 overflow-hidden flex flex-col h-56">
+          <p class="font-mono text-xs text-white/50 uppercase tracking-widest p-4 border-b border-white/10 bg-black/40">Event Timeline</p>
+          <div id="reportTimeline" class="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-xs">
+            <!-- Timeline items will be injected here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Edge Case Warning (e.g. Session Too Short) -->
+      <div id="reportEdgeWarning" class="hidden text-center text-warning-yellow p-6 border border-warning-yellow/30 bg-warning-yellow/5 rounded-lg">
+        <p class="font-bold">SESSION TOO SHORT</p>
+        <p class="text-sm mt-2 opacity-80">Score not available. Session must be at least 60 seconds.</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="pt-2 flex gap-4">
+        <button id="btnNewSession" class="flex-1 btn-primary text-center tracking-widest text-sm py-4">NEW SESSION</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
