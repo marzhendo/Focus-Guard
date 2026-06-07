@@ -202,11 +202,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     setThemeColor('alert-red');
     if (warningBanner) warningBanner.classList.add('hidden'); // Hide warning banner
+    if (window.FocusEnvironment) window.FocusEnvironment.suspend();
     startAlarm();
   }
 
   function exitAlertState() {
     stopAlarm();
+    if (window.FocusEnvironment) window.FocusEnvironment.resume();
   }
 
   // --- State Management & UI Updates ---
@@ -234,6 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
       
       setThemeColor('focus-green');
       if (timerInterval) clearInterval(timerInterval);
+      
+      const envList = document.getElementById('envSelectionList');
+      const envSummary = document.getElementById('envLockedSummary');
+      if (envList && envSummary) {
+        envList.classList.remove('hidden');
+        envSummary.classList.add('hidden');
+      }
     } 
     else if (newState === STATES.FOCUS_ACTIVE) {
       if (sessionTitle) sessionTitle.textContent = "Focus Session";
@@ -241,6 +250,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (statusText) statusText.textContent = "AI ACTIVE";
       
       setThemeColor('focus-green');
+      
+      const envList = document.getElementById('envSelectionList');
+      const envSummary = document.getElementById('envLockedSummary');
+      if (envList && envSummary) {
+        envList.classList.add('hidden');
+        envSummary.classList.remove('hidden');
+        const lockedEnvName = document.getElementById('lockedEnvName');
+        if (lockedEnvName && window.sessionMetrics && window.sessionMetrics.environmentType) {
+          lockedEnvName.innerHTML = `🎧 ${window.sessionMetrics.environmentType}`;
+        }
+      }
     }
     else if (newState === STATES.WARNING) {
       if (prevState !== STATES.WARNING) {
@@ -437,10 +457,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (currentState === STATES.IDLE) {
         const sessionGoalInput = document.getElementById('sessionGoalInput');
         const goalValue = sessionGoalInput && sessionGoalInput.value.trim() !== '' ? sessionGoalInput.value.trim() : 'General Focus Session';
+        
+        const envRadios = document.querySelectorAll('input[name="focusEnv"]');
+        let selectedEnv = "None";
+        envRadios.forEach(radio => { if (radio.checked) selectedEnv = radio.value; });
+        const envVolumeInput = document.getElementById('focusEnvVolume');
+        const envVol = envVolumeInput ? envVolumeInput.value : 50;
 
         window.sessionMetrics = {
           isActive: true,
           goal: goalValue,
+          environmentType: selectedEnv,
           focusTime: 0,
           distractedTime: 0,
           faceLostTime: 0,
@@ -448,6 +475,11 @@ document.addEventListener('DOMContentLoaded', () => {
           alertCount: 0,
           sessionEvents: [{ type: "SESSION_START", timestamp: "00:00" }]
         };
+        
+        if (window.FocusEnvironment) {
+          window.FocusEnvironment.play(selectedEnv, envVol);
+        }
+        
         changeState(STATES.FOCUS_ACTIVE);
       }
       startTimer();
@@ -464,10 +496,22 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnAbort) {
     btnAbort.addEventListener('click', () => {
       console.log('Tombol Abort di-klik');
+      if (window.FocusEnvironment) window.FocusEnvironment.stop();
       generateSessionReport("SESSION ABORTED", "aborted");
       changeState(STATES.IDLE);
     });
   }
+
+  // Volume slider event listener
+  const envVolumeInput = document.getElementById('focusEnvVolume');
+  if (envVolumeInput) {
+    envVolumeInput.addEventListener('input', (e) => {
+      if (window.FocusEnvironment && window.FocusEnvironment.isPlaying) {
+        window.FocusEnvironment.setVolume(e.target.value);
+      }
+    });
+  }
+
 
   // --- NAVIGATION MANAGER ---
   const navDashboard = document.getElementById('nav-dashboard');
@@ -964,6 +1008,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function generateSessionReport(title, status = "completed") {
     if (!window.sessionMetrics.isActive) return;
     window.sessionMetrics.isActive = false; // Stop tracking
+    
+    if (window.FocusEnvironment) window.FocusEnvironment.stop();
 
     window.sessionMetrics.sessionEvents.push({ type: "SESSION_COMPLETE", timestamp: getCurrentSessionTime() });
 
@@ -1069,6 +1115,7 @@ document.addEventListener('DOMContentLoaded', () => {
       confidenceLevel: confidenceLevel,
       sessionEvents: m.sessionEvents,
       goal: m.goal || "General Focus Session",
+      environmentType: m.environmentType || "None",
       status: status
     };
 
@@ -1092,6 +1139,7 @@ document.addEventListener('DOMContentLoaded', () => {
       badge: badgeText,
       focusPercentage: focusPercentage,
       goal: m.goal || "General Focus Session",
+      environmentType: m.environmentType || "None",
       insight: insight,
       eventTimeline: m.sessionEvents
     });

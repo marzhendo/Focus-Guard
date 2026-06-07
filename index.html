@@ -85,6 +85,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
+  <script defer src="noise.js"></script>
   <script defer src="pomodoro.js"></script>
   <script defer src="history.js"></script>
   <script defer src="analytics.js"></script>
@@ -178,9 +179,71 @@
       </div>
 
       <!-- Session Goal Input -->
-      <div id="sessionGoalContainer" class="mb-8 w-80 relative z-50">
+      <div id="sessionGoalContainer" class="mb-6 w-80 relative z-50">
         <label for="sessionGoalInput" class="block text-[10px] text-white/50 font-mono uppercase tracking-widest mb-2 text-center">Session Goal</label>
         <input type="text" id="sessionGoalInput" placeholder="What are you focusing on?" maxlength="50" class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white text-center focus:outline-none focus:border-focus-green/50 focus:bg-black/60 transition-colors placeholder:text-white/20">
+      </div>
+
+      <!-- Focus Environment Selector -->
+      <div id="focusEnvironmentContainer" class="mb-8 w-80 relative z-50 bg-black/40 border border-white/10 rounded-lg p-4">
+        <label class="block text-[10px] text-white/50 font-mono uppercase tracking-widest mb-3 text-center border-b border-white/10 pb-2">Focus Environment</label>
+        
+        <div id="envLockedSummary" class="hidden mb-4 p-4 rounded-lg border border-white/10 bg-white/5 group relative">
+          <div class="flex items-center justify-between mb-1">
+            <span id="lockedEnvName" class="font-bold text-sm text-white flex items-center gap-2">🎧 Brown Noise</span>
+            <span class="text-xs">🔒</span>
+          </div>
+          <p class="text-[10px] text-white/50">Environment Locked</p>
+          
+          <!-- Tooltip -->
+          <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-black/90 border border-white/10 rounded text-[10px] text-white/70 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+            Changes can only be made after the session ends.
+          </div>
+        </div>
+
+        <div id="envSelectionList" class="flex flex-col gap-2 mb-4 text-left max-h-56 overflow-y-auto custom-scrollbar pr-2">
+          <!-- None -->
+          <label class="flex items-start gap-3 cursor-pointer hover:bg-white/10 text-white/70 transition-colors bg-white/5 p-3 rounded-lg border border-transparent has-[:checked]:border-focus-green/50 has-[:checked]:bg-focus-green/10">
+            <input type="radio" name="focusEnv" value="None" checked class="mt-0.5 accent-focus-green">
+            <div>
+              <span class="block font-bold text-sm text-white">No Sound</span>
+            </div>
+          </label>
+
+          <!-- Pink Noise -->
+          <label class="flex items-start gap-3 cursor-pointer hover:bg-white/10 text-white/70 transition-colors bg-white/5 p-3 rounded-lg border border-transparent has-[:checked]:border-focus-green/50 has-[:checked]:bg-focus-green/10">
+            <input type="radio" name="focusEnv" value="Pink Noise" class="mt-0.5 accent-focus-green">
+            <div>
+              <span class="block font-bold text-sm text-white mb-1">Pink Noise</span>
+              <div class="text-[10px] text-white/60 mb-1 space-y-0.5">
+                <span class="block text-white/40 font-mono uppercase">Best For:</span>
+                <span class="block">✓ Studying &nbsp;✓ Reading &nbsp;✓ Courses</span>
+              </div>
+              <div class="text-[9px] text-focus-green/80 font-mono mt-2 bg-focus-green/10 inline-block px-1.5 py-0.5 rounded">🎧 Best experienced with headphones.</div>
+            </div>
+          </label>
+
+          <!-- Brown Noise -->
+          <label class="flex items-start gap-3 cursor-pointer hover:bg-white/10 text-white/70 transition-colors bg-white/5 p-3 rounded-lg border border-transparent has-[:checked]:border-focus-green/50 has-[:checked]:bg-focus-green/10">
+            <input type="radio" name="focusEnv" value="Brown Noise" class="mt-0.5 accent-focus-green">
+            <div>
+              <span class="block font-bold text-sm text-white mb-1">Brown Noise</span>
+              <div class="text-[10px] text-white/60 mb-1 space-y-0.5">
+                <span class="block text-white/40 font-mono uppercase">Best For:</span>
+                <span class="block">✓ Programming &nbsp;✓ Deep Work &nbsp;✓ Writing</span>
+              </div>
+              <div class="text-[9px] text-focus-green/80 font-mono mt-2 bg-focus-green/10 inline-block px-1.5 py-0.5 rounded">🎧 Best experienced with headphones.</div>
+            </div>
+          </label>
+
+          </label>
+        </div>
+        
+        <!-- Volume Slider -->
+        <div class="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" /></svg>
+          <input type="range" id="focusEnvVolume" min="0" max="100" value="50" class="w-full accent-focus-green h-1 bg-white/20 rounded-lg appearance-none cursor-pointer">
+        </div>
       </div>
 
       <!-- Control Buttons -->
@@ -286,7 +349,7 @@
       <!-- Dashboard Content -->
       <div id="analytics-content" class="space-y-6">
         <!-- KPI Cards -->
-        <div class="grid grid-cols-4 gap-4">
+        <div class="grid grid-cols-5 gap-4">
           <!-- Card 1 -->
           <div class="glass-panel p-6 border-white/5 flex flex-col">
             <span class="text-white/50 font-mono text-[10px] uppercase tracking-widest mb-2">Avg Focus Score</span>
@@ -306,6 +369,12 @@
           <div class="glass-panel p-6 border-white/5 flex flex-col">
             <span class="text-white/50 font-mono text-[10px] uppercase tracking-widest mb-2">Best Score</span>
             <span id="kpi-best-score" class="font-display text-4xl font-bold text-focus-green tabular-nums">0</span>
+          </div>
+          <!-- Card 5 -->
+          <div class="glass-panel p-6 border-white/5 flex flex-col">
+            <span class="text-white/50 font-mono text-[10px] uppercase tracking-widest mb-2">Best Environment</span>
+            <span id="kpi-best-env" class="font-display text-2xl font-bold text-white tabular-nums truncate">N/A</span>
+            <span id="kpi-best-env-score" class="text-white/40 font-mono text-xs mt-1">- Avg Score</span>
           </div>
         </div>
 
@@ -361,6 +430,27 @@
             </div>
           </div>
 
+        </div>
+
+        <!-- Focus Environment Performance Section -->
+        <div class="glass-panel p-6 border-white/5 flex flex-col">
+          <h3 class="text-lg font-bold text-white mb-1">Focus Environment Performance</h3>
+          <p class="text-xs text-white/40 font-mono uppercase tracking-widest mb-6">Compare Focus Sounds</p>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-xs font-mono text-white/50 uppercase tracking-wider">
+                  <th class="px-6 py-4 font-normal">Environment</th>
+                  <th class="px-6 py-4 font-normal">Total Sessions</th>
+                  <th class="px-6 py-4 font-normal">Avg Focus Score</th>
+                </tr>
+              </thead>
+              <tbody id="env-analytics-table-body" class="text-sm divide-y divide-white/5">
+                <!-- Data injected via JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Recent Sessions Table -->
@@ -528,6 +618,8 @@
       <div class="text-center space-y-1 border-b border-white/10 pb-6">
         <h3 id="reportTitle" class="font-display text-2xl font-bold tracking-widest text-white/90 uppercase">SESSION REPORT</h3>
         <p id="reportRating" class="font-mono text-sm font-bold text-focus-green">Excellent Focus</p>
+        <p class="font-mono text-[10px] uppercase text-white/40 mt-2">SESSION GOAL</p>
+        <p id="reportGoal" class="text-sm font-bold text-white/80">General Focus Session</p>
       </div>
 
       <div id="reportContentContainer" class="flex flex-col gap-8">
