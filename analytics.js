@@ -244,8 +244,36 @@ window.ProductivityAnalytics = {
       }
     }
 
-    // 1. Excellent Focus
-    if (score >= 90 && monitoring >= 90) {
+    // Environment Insight (Priority Override if applicable)
+    // Find best environment with >= 3 reliable sessions
+    const envStats = {};
+    reliableHistory.forEach(s => {
+      const env = s.environmentType || "None";
+      if (!envStats[env]) envStats[env] = { totalScore: 0, count: 0 };
+      envStats[env].totalScore += (s.score || 0);
+      envStats[env].count++;
+    });
+    
+    let bestEnv = null;
+    let bestEnvAvg = -1;
+    let noneAvg = envStats["None"] && envStats["None"].count >= 3 ? Math.round(envStats["None"].totalScore / envStats["None"].count) : null;
+    
+    for (const [env, data] of Object.entries(envStats)) {
+      if (data.count >= 3) {
+        const avg = Math.round(data.totalScore / data.count);
+        if (avg > bestEnvAvg) {
+          bestEnvAvg = avg;
+          bestEnv = env;
+        }
+      }
+    }
+    
+    // Fallback logic
+    if (bestEnv && bestEnv !== "None" && noneAvg !== null && bestEnvAvg > noneAvg) {
+      insight = `${bestEnv} sessions consistently achieve higher focus scores compared to sessions without ambient sound.`;
+    } else if (bestEnv && bestEnv !== "None") {
+      insight = `${bestEnv} appears to be your most effective focus environment.`;
+    } else if (score >= 90 && monitoring >= 90) {
       insight = "Excellent sustained concentration throughout the session.";
     } 
     // 2. Low Confidence
@@ -280,9 +308,73 @@ window.ProductivityAnalytics = {
     textEl.textContent = insight;
   },
 
+  renderEnvironmentAnalytics: function(history) {
+    const tbody = document.getElementById('env-analytics-table-body');
+    const bestEnvEl = document.getElementById('kpi-best-env');
+    const bestEnvScoreEl = document.getElementById('kpi-best-env-score');
+    
+    if (!tbody || !bestEnvEl || !bestEnvScoreEl) return;
+    
+    const reliableHistory = history ? history.filter(s => s.isReliableSession === true) : [];
+    
+    const envStats = {};
+    reliableHistory.forEach(s => {
+      const env = s.environmentType || "None";
+      if (!envStats[env]) envStats[env] = { totalScore: 0, count: 0 };
+      envStats[env].totalScore += (s.score || 0);
+      envStats[env].count++;
+    });
+
+    tbody.innerHTML = '';
+    
+    if (Object.keys(envStats).length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-white/40">No reliable data available</td></tr>`;
+      bestEnvEl.textContent = "N/A";
+      bestEnvScoreEl.textContent = "- Avg Score";
+      return;
+    }
+
+    let bestEnv = "N/A";
+    let bestEnvAvg = -1;
+
+    for (const [env, data] of Object.entries(envStats)) {
+      const avg = Math.round(data.totalScore / data.count);
+      
+      // Determine best env (min 3 sessions required for statistical relevance to appear as Best)
+      // Wait, if no env has 3 sessions, do we show N/A or just the best available?
+      // "Minimum Sample Requirement: Insight environment hanya boleh muncul jika >= 3. Best Environment dihitung otomatis."
+      // I'll enforce >= 3 for Best Environment as well to be safe, or just any if none >= 3? 
+      // The prompt says "Tidak ada insight berdasarkan sample kecil" but doesn't explicitly restrict Best Env card. 
+      // I will restrict Best Env to >= 3 to be robust.
+      if (data.count >= 3 && avg > bestEnvAvg) {
+        bestEnvAvg = avg;
+        bestEnv = env;
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-white font-bold">${env}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-white/80">${data.count}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-focus-green font-mono">${avg}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+    
+    if (bestEnv !== "N/A") {
+      bestEnvEl.textContent = bestEnv;
+      bestEnvScoreEl.textContent = `${bestEnvAvg} Avg Score`;
+      bestEnvEl.className = "font-display text-2xl font-bold text-focus-green tabular-nums truncate";
+    } else {
+      bestEnvEl.textContent = "N/A";
+      bestEnvScoreEl.textContent = "Needs 3+ Sessions";
+      bestEnvEl.className = "font-display text-2xl font-bold text-white tabular-nums truncate";
+    }
+  },
+
   updateAll: function(history) {
     this.renderTrendChart(history);
     this.renderAchievements(history);
+    this.renderEnvironmentAnalytics(history);
     this.generateInsight(history);
   }
 };
