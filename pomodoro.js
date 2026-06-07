@@ -36,6 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
     get alertThreshold() { return window.focusGuardSettings.alertDelay; }
   };
 
+  window.getMonitoringTierInfo = function(score) {
+    const val = typeof score === 'number' ? score : 0;
+    if (val >= 90) return { label: "Excellent Monitoring", level: "Excellent", colorClass: "text-focus-green", badgeClass: "bg-focus-green/20 text-focus-green border-focus-green/30" };
+    if (val >= 70) return { label: "Good Monitoring", level: "Good", colorClass: "text-green-400", badgeClass: "bg-green-400/20 text-green-400 border-green-400/30" };
+    if (val >= 50) return { label: "Fair Monitoring", level: "Fair", colorClass: "text-warning-yellow", badgeClass: "bg-warning-yellow/20 text-warning-yellow border-warning-yellow/30" };
+    return { label: "Poor Monitoring", level: "Poor", colorClass: "text-alert-red", badgeClass: "bg-alert-red/20 text-alert-red border-alert-red/30" };
+  };
+
   // --- Global States ---
   const STATES = {
     IDLE: 'IDLE',
@@ -409,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       // Timer reached 00:00
       if (currentState === STATES.FOCUS_ACTIVE || currentState === STATES.WARNING || currentState === STATES.ALERT) {
-        generateSessionReport("SESSION COMPLETE");
+        generateSessionReport("SESSION COMPLETE", "completed");
         changeState(STATES.BREAK_TIME);
         startTimer(); // Auto-start the 5 min break timer
       } else if (currentState === STATES.BREAK_TIME) {
@@ -427,8 +435,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btnStart.addEventListener('click', () => {
       console.log('Tombol Start di-klik');
       if (currentState === STATES.IDLE) {
+        const sessionGoalInput = document.getElementById('sessionGoalInput');
+        const goalValue = sessionGoalInput && sessionGoalInput.value.trim() !== '' ? sessionGoalInput.value.trim() : 'General Focus Session';
+
         window.sessionMetrics = {
           isActive: true,
+          goal: goalValue,
           focusTime: 0,
           distractedTime: 0,
           faceLostTime: 0,
@@ -452,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnAbort) {
     btnAbort.addEventListener('click', () => {
       console.log('Tombol Abort di-klik');
-      generateSessionReport("SESSION ABORTED");
+      generateSessionReport("SESSION ABORTED", "aborted");
       changeState(STATES.IDLE);
     });
   }
@@ -520,8 +532,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const mirrorCameraInput = document.getElementById('mirrorCameraInput');
   const cameraSelect = document.getElementById('cameraSelect');
   const cameraPreview = document.getElementById('cameraPreview');
-  const cameraPreviewPlaceholder = document.getElementById('cameraPreviewPlaceholder');
   const btnRestoreDefaults = document.getElementById('btnRestoreDefaults');
+  const btnClearHistory = document.getElementById('btnClearHistory');
+  const cameraPreviewPlaceholder = document.getElementById('cameraPreviewPlaceholder');
 
   window.updateMirrorState = function() {
     const transformValue = window.focusGuardSettings.mirrorCamera ? "scaleX(-1)" : "scaleX(1)";
@@ -697,6 +710,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (btnClearHistory) {
+    btnClearHistory.addEventListener('click', () => {
+      if (confirm("Are you sure you want to clear all session history and achievements? This action cannot be undone.")) {
+        localStorage.removeItem("focusGuardHistory");
+        localStorage.removeItem("focusGuardAchievements");
+        renderAnalytics();
+      }
+    });
+  }
+
   function renderAnalytics() {
     const history = loadSessionHistory();
     const emptyState = document.getElementById('analytics-empty-state');
@@ -715,21 +738,25 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalMonitoring = 0;
     let bestScore = 0;
     
-    history.forEach(session => {
+    const reliableHistory = history.filter(s => s.isReliableSession === true);
+
+    reliableHistory.forEach(session => {
       totalScore += session.score || 0;
-      totalMonitoring += session.monitoringConfidence || 0;
+      totalMonitoring += session.monitoringQuality || session.monitoringConfidence || 0;
       if ((session.score || 0) > bestScore) {
         bestScore = session.score || 0;
       }
     });
 
-    const avgScore = Math.round(totalScore / history.length);
-    const avgMonitoring = Math.round(totalMonitoring / history.length);
+    const avgScore = reliableHistory.length > 0 ? Math.round(totalScore / reliableHistory.length) : "-";
+    const avgMonitoring = reliableHistory.length > 0 ? Math.round(totalMonitoring / reliableHistory.length) + "%" : "-";
+    const totalSessionsLabel = reliableHistory.length > 0 ? reliableHistory.length : "0";
+    const bestScoreLabel = reliableHistory.length > 0 ? bestScore : "-";
 
     document.getElementById('kpi-avg-score').textContent = avgScore;
-    document.getElementById('kpi-avg-monitoring').textContent = avgMonitoring + "%";
-    document.getElementById('kpi-total-sessions').textContent = history.length;
-    document.getElementById('kpi-best-score').textContent = bestScore;
+    document.getElementById('kpi-avg-monitoring').textContent = avgMonitoring;
+    document.getElementById('kpi-total-sessions').textContent = totalSessionsLabel;
+    document.getElementById('kpi-best-score').textContent = bestScoreLabel;
 
     // Render Table
     const tbody = document.getElementById('analytics-table-body');
@@ -749,19 +776,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         const dateStr = new Date(session.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+        const goalStr = session.goal || "General Focus Session";
         
         const scoreColor = session.score >= 90 ? "text-focus-green" : session.score >= 75 ? "text-focus-green" : session.score >= 60 ? "text-warning-yellow" : "text-alert-red";
-        const monColor = session.monitoringConfidence >= 90 ? "text-focus-green" : session.monitoringConfidence >= 70 ? "text-green-400" : session.monitoringConfidence >= 40 ? "text-warning-yellow" : "text-alert-red";
+        
+        const monitorVal = session.monitoringQuality || session.monitoringConfidence || 0;
+        const tierInfo = window.getMonitoringTierInfo(monitorVal);
+        const monColor = tierInfo.colorClass;
+
+        let statusTag = "";
+        if (session.sessionType === "invalid") {
+          statusTag = `<span class="ml-2 px-2 py-0.5 rounded text-[8px] font-bold bg-alert-red/20 text-alert-red border border-alert-red/30">INVALID</span>`;
+        } else if (session.sessionType === "aborted") {
+          statusTag = `<span class="ml-2 px-2 py-0.5 rounded text-[8px] font-bold bg-warning-yellow/20 text-warning-yellow border border-warning-yellow/30">ABORTED</span>`;
+        } else if (session.sessionType === "completed" && !session.isReliableSession) {
+          statusTag = `<span class="ml-2 px-2 py-0.5 rounded text-[8px] font-bold bg-warning-yellow/20 text-warning-yellow border border-warning-yellow/30">PARTIAL</span>`;
+        } else {
+          statusTag = `<span class="ml-2 px-2 py-0.5 rounded text-[8px] font-bold bg-focus-green/20 text-focus-green border border-focus-green/30">COMPLETED</span>`;
+        }
 
         tr.innerHTML = `
-          <td class="px-6 py-4 whitespace-nowrap text-white/80">${dateStr}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-white/80 flex items-center">${dateStr} ${statusTag}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-white/80">${goalStr}</td>
           <td class="px-6 py-4 whitespace-nowrap"><span class="font-bold ${scoreColor}">${session.score}</span></td>
-          <td class="px-6 py-4 whitespace-nowrap"><span class="${monColor}">${session.monitoringConfidence}%</span></td>
+          <td class="px-6 py-4 whitespace-nowrap"><span class="${monColor}">${monitorVal}%</span></td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-white/60">${session.warnings}</td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-white/60">${session.alerts}</td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    // Call Productivity Analytics Extension
+    if (typeof window.ProductivityAnalytics !== 'undefined') {
+      window.ProductivityAnalytics.updateAll(history);
     }
   }
 
@@ -780,7 +828,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const dateStr = new Date(session.timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute:'2-digit' });
-    document.getElementById('detailRating').textContent = dateStr;
+    
+    let statusTagHTML = "";
+    if (session.sessionType === "invalid") {
+      statusTagHTML = `<span class="ml-3 px-2 py-0.5 rounded text-[10px] font-bold bg-alert-red/20 text-alert-red border border-alert-red/30">INVALID</span>`;
+    } else if (session.sessionType === "aborted") {
+      statusTagHTML = `<span class="ml-3 px-2 py-0.5 rounded text-[10px] font-bold bg-warning-yellow/20 text-warning-yellow border border-warning-yellow/30">ABORTED</span>`;
+    } else if (session.sessionType === "completed" && !session.isReliableSession) {
+      statusTagHTML = `<span class="ml-3 px-2 py-0.5 rounded text-[10px] font-bold bg-warning-yellow/20 text-warning-yellow border border-warning-yellow/30">PARTIAL</span>`;
+    } else {
+      statusTagHTML = `<span class="ml-3 px-2 py-0.5 rounded text-[10px] font-bold bg-focus-green/20 text-focus-green border border-focus-green/30">COMPLETED</span>`;
+    }
+
+    document.getElementById('detailRating').innerHTML = `${dateStr} ${statusTagHTML}`;
+    
+    const detailGoalEl = document.getElementById('detailGoal');
+    if (detailGoalEl) detailGoalEl.textContent = session.goal || "General Focus Session";
 
     document.getElementById('detailScoreValue').textContent = session.score;
     const scoreColor = session.score >= 90 ? "text-focus-green" : session.score >= 75 ? "text-focus-green" : session.score >= 60 ? "text-warning-yellow" : "text-alert-red";
@@ -797,10 +860,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('detailAlerts').textContent = session.alerts;
 
     // Quality
-    const monColor = session.monitoringConfidence >= 90 ? "font-bold text-focus-green text-sm" : session.monitoringConfidence >= 70 ? "font-bold text-green-400 text-sm" : session.monitoringConfidence >= 40 ? "font-bold text-warning-yellow text-sm" : "font-bold text-alert-red text-sm";
+    let monVal = Number(session.monitoringQuality);
+    if (isNaN(monVal) || session.monitoringQuality === undefined) {
+      monVal = Number(session.monitoringConfidence) || 0;
+    }
+    const tierInfo = window.getMonitoringTierInfo(monVal);
     
-    document.getElementById('detailQualityLabel').className = monColor;
-    document.getElementById('detailQualityPercent').textContent = session.monitoringConfidence + "%";
+    document.getElementById('detailQualityLabel').className = `font-bold ${tierInfo.colorClass} text-sm`;
+    document.getElementById('detailQualityLabel').textContent = tierInfo.label;
+    document.getElementById('detailQualityPercent').textContent = monVal + "%";
+    
+    const badgeConf = document.getElementById('detailConfidenceBadge');
+    if (badgeConf) {
+      badgeConf.className = `self-start px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase tracking-widest border ${tierInfo.badgeClass}`;
+      badgeConf.textContent = `Confidence: ${tierInfo.level}`;
+    }
     
     if (session.faceLostTime > 0.2 * session.sessionDuration) {
       document.getElementById('detailQualityWarning').classList.remove('hidden');
@@ -855,20 +929,18 @@ document.addEventListener('DOMContentLoaded', () => {
   updateDisplay();
 
   // --- SESSION REPORT MANAGER ---
-  function generateInsight(alertCount, warningCount, faceLostTime, totalSessionDuration) {
-    if (faceLostTime > 0.2 * totalSessionDuration) {
-      return "Monitoring reliability was reduced because the face was frequently not visible.";
-    }
-    if (alertCount > 0) {
-      return "Multiple prolonged distractions occurred during the session.";
-    }
-    if (warningCount > 3) {
-      return "Frequent attention shifts were detected.";
-    }
-    if (alertCount === 0 && warningCount <= 2) {
+  function generateInsight(focusScore, monitoringConfidence, faceLostPercentage) {
+    if (focusScore >= 90 && monitoringConfidence >= 90) {
       return "Excellent sustained concentration throughout the session.";
+    } else if (focusScore >= 70 && monitoringConfidence < 50) {
+      return "Focus appeared acceptable, but monitoring quality was insufficient for high confidence.";
+    } else if (faceLostPercentage > 40) {
+      return "Large portions of the session could not be monitored because the face was not visible.";
+    } else if (focusScore < 50) {
+      return "Frequent distractions were detected during the session.";
+    } else {
+      return "Good effort! Maintain this focus and ensure your face is clearly visible.";
     }
-    return "Good session with typical amounts of brief distraction.";
   }
 
   // --- SESSION HISTORY MANAGER ---
@@ -889,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function generateSessionReport(title) {
+  function generateSessionReport(title, status = "completed") {
     if (!window.sessionMetrics.isActive) return;
     window.sessionMetrics.isActive = false; // Stop tracking
 
@@ -957,16 +1029,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Monitoring Quality
-    const monitoringConfidence = ((totalSessionDuration - m.faceLostTime) / totalSessionDuration) * 100;
+    const monitoringConfidence = ((totalSessionDuration - m.faceLostTime) / Math.max(totalSessionDuration, 1)) * 100;
     const faceDetectionRate = Math.round(monitoringConfidence);
     
-    let qualityLabel = "";
-    if (faceDetectionRate >= 90) qualityLabel = "Excellent Monitoring";
-    else if (faceDetectionRate >= 70) qualityLabel = "Good Monitoring";
-    else if (faceDetectionRate >= 40) qualityLabel = "Fair Monitoring";
-    else qualityLabel = "Poor Monitoring";
+    let confidenceLevel = "";
+    if (faceDetectionRate >= 90) confidenceLevel = "Excellent";
+    else if (faceDetectionRate >= 70) confidenceLevel = "Good";
+    else if (faceDetectionRate >= 50) confidenceLevel = "Fair";
+    else confidenceLevel = "Poor";
 
-    const insight = generateInsight(m.alertCount, m.warningCount, m.faceLostTime, totalSessionDuration);
+    if (status === "aborted") {
+      categoryTitle = "SESSION ENDED EARLY";
+      badgeText = "⚠ Partial Result";
+      colorClass = "text-warning-yellow";
+    }
+
+    let sessionType = status;
+    if (faceDetectionRate < 20 || totalSessionDuration < 30) {
+      sessionType = "invalid";
+    }
+
+    const isReliableSession = (sessionType === "completed" && faceDetectionRate >= 50);
+
+    const faceLostPercentage = (m.faceLostTime / Math.max(totalSessionDuration, 1)) * 100;
+    const insight = generateInsight(finalScore, faceDetectionRate, faceLostPercentage);
 
     const focusPercentage = Math.round(focusRatio * 100);
 
@@ -979,8 +1065,11 @@ document.addEventListener('DOMContentLoaded', () => {
       alertCount: m.alertCount,
       badge: badgeText,
       insight: insight,
-      monitoringQuality: qualityLabel,
-      sessionEvents: m.sessionEvents
+      monitoringQuality: faceDetectionRate,
+      confidenceLevel: confidenceLevel,
+      sessionEvents: m.sessionEvents,
+      goal: m.goal || "General Focus Session",
+      status: status
     };
 
     // Save to LocalStorage
@@ -988,17 +1077,22 @@ document.addEventListener('DOMContentLoaded', () => {
     history.push({
       id: "session_" + Date.now(),
       timestamp: Date.now(),
+      status: status,
+      sessionType: sessionType,
+      isReliableSession: isReliableSession,
       score: finalScore,
-      monitoringConfidence: faceDetectionRate,
+      monitoringQuality: faceDetectionRate,
+      confidenceLevel: confidenceLevel,
       sessionDuration: totalSessionDuration,
       focusTime: m.focusTime,
       distractedTime: m.distractedTime,
       faceLostTime: m.faceLostTime,
-      focusPercentage: focusPercentage,
       warnings: m.warningCount,
       alerts: m.alertCount,
-      insight: insight,
       badge: badgeText,
+      focusPercentage: focusPercentage,
+      goal: m.goal || "General Focus Session",
+      insight: insight,
       eventTimeline: m.sessionEvents
     });
 
@@ -1016,6 +1110,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('reportTitle').textContent = title;
     
+    const reportGoalEl = document.getElementById('reportGoal');
+    if (reportGoalEl) reportGoalEl.textContent = r.goal || "General Focus Session";
+
     const pRating = document.getElementById('reportRating');
     pRating.textContent = categoryTitle;
     pRating.className = `font-mono text-sm font-bold ${colorClass}`;
@@ -1082,6 +1179,12 @@ document.addEventListener('DOMContentLoaded', () => {
       div.innerHTML = `<span class="text-white/40 min-w-[40px]">${ev.timestamp}</span><span class="${color}">${ev.type.replace('_', ' ')}</span>`;
       tlContainer.appendChild(div);
     });
+
+    if (faceDetectionRate < 50) {
+      document.getElementById('reportLowConfidenceWarning').classList.remove('hidden');
+    } else {
+      document.getElementById('reportLowConfidenceWarning').classList.add('hidden');
+    }
 
     modal.classList.remove('hidden');
   }
