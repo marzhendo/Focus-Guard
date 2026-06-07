@@ -188,22 +188,54 @@
       <div id="focusEnvironmentContainer" class="mb-8 w-80 relative z-50 bg-black/40 border border-white/10 rounded-lg p-4">
         <label class="block text-[10px] text-white/50 font-mono uppercase tracking-widest mb-3 text-center border-b border-white/10 pb-2">Focus Environment</label>
         
-        <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
-          <label class="flex items-center gap-2 cursor-pointer hover:text-white text-white/70 transition-colors bg-white/5 p-2 rounded">
-            <input type="radio" name="focusEnv" value="None" checked class="accent-focus-green">
-            <span>No Sound</span>
+        <div id="envLockedSummary" class="hidden mb-4 p-4 rounded-lg border border-white/10 bg-white/5 group relative">
+          <div class="flex items-center justify-between mb-1">
+            <span id="lockedEnvName" class="font-bold text-sm text-white flex items-center gap-2">🎧 Brown Noise</span>
+            <span class="text-xs">🔒</span>
+          </div>
+          <p class="text-[10px] text-white/50">Environment Locked</p>
+          
+          <!-- Tooltip -->
+          <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-black/90 border border-white/10 rounded text-[10px] text-white/70 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+            Changes can only be made after the session ends.
+          </div>
+        </div>
+
+        <div id="envSelectionList" class="flex flex-col gap-2 mb-4 text-left max-h-56 overflow-y-auto custom-scrollbar pr-2">
+          <!-- None -->
+          <label class="flex items-start gap-3 cursor-pointer hover:bg-white/10 text-white/70 transition-colors bg-white/5 p-3 rounded-lg border border-transparent has-[:checked]:border-focus-green/50 has-[:checked]:bg-focus-green/10">
+            <input type="radio" name="focusEnv" value="None" checked class="mt-0.5 accent-focus-green">
+            <div>
+              <span class="block font-bold text-sm text-white">No Sound</span>
+            </div>
           </label>
-          <label class="flex items-center gap-2 cursor-pointer hover:text-white text-white/70 transition-colors bg-white/5 p-2 rounded">
-            <input type="radio" name="focusEnv" value="Pink Noise" class="accent-focus-green">
-            <span>Pink Noise</span>
+
+          <!-- Pink Noise -->
+          <label class="flex items-start gap-3 cursor-pointer hover:bg-white/10 text-white/70 transition-colors bg-white/5 p-3 rounded-lg border border-transparent has-[:checked]:border-focus-green/50 has-[:checked]:bg-focus-green/10">
+            <input type="radio" name="focusEnv" value="Pink Noise" class="mt-0.5 accent-focus-green">
+            <div>
+              <span class="block font-bold text-sm text-white mb-1">Pink Noise</span>
+              <div class="text-[10px] text-white/60 mb-1 space-y-0.5">
+                <span class="block text-white/40 font-mono uppercase">Best For:</span>
+                <span class="block">✓ Studying &nbsp;✓ Reading &nbsp;✓ Courses</span>
+              </div>
+              <div class="text-[9px] text-focus-green/80 font-mono mt-2 bg-focus-green/10 inline-block px-1.5 py-0.5 rounded">🎧 Best experienced with headphones.</div>
+            </div>
           </label>
-          <label class="flex items-center gap-2 cursor-pointer hover:text-white text-white/70 transition-colors bg-white/5 p-2 rounded">
-            <input type="radio" name="focusEnv" value="Brown Noise" class="accent-focus-green">
-            <span>Brown Noise</span>
+
+          <!-- Brown Noise -->
+          <label class="flex items-start gap-3 cursor-pointer hover:bg-white/10 text-white/70 transition-colors bg-white/5 p-3 rounded-lg border border-transparent has-[:checked]:border-focus-green/50 has-[:checked]:bg-focus-green/10">
+            <input type="radio" name="focusEnv" value="Brown Noise" class="mt-0.5 accent-focus-green">
+            <div>
+              <span class="block font-bold text-sm text-white mb-1">Brown Noise</span>
+              <div class="text-[10px] text-white/60 mb-1 space-y-0.5">
+                <span class="block text-white/40 font-mono uppercase">Best For:</span>
+                <span class="block">✓ Programming &nbsp;✓ Deep Work &nbsp;✓ Writing</span>
+              </div>
+              <div class="text-[9px] text-focus-green/80 font-mono mt-2 bg-focus-green/10 inline-block px-1.5 py-0.5 rounded">🎧 Best experienced with headphones.</div>
+            </div>
           </label>
-          <label class="flex items-center gap-2 cursor-pointer hover:text-white text-white/70 transition-colors bg-white/5 p-2 rounded">
-            <input type="radio" name="focusEnv" value="White Noise" class="accent-focus-green">
-            <span>White Noise</span>
+
           </label>
         </div>
         

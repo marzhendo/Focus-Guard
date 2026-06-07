@@ -41,9 +41,7 @@ window.FocusEnvironment = {
     this.filterNode = this.audioContext.createBiquadFilter();
     this.gainNode = this.audioContext.createGain();
 
-    if (type === "White Noise") {
-      this.filterNode.type = "allpass";
-    } else if (type === "Pink Noise") {
+    if (type === "Pink Noise") {
       this.filterNode.type = "lowpass";
       this.filterNode.frequency.value = 1000;
       this.filterNode.Q.value = 0.5;
@@ -89,5 +87,17 @@ window.FocusEnvironment = {
       this.gainNode = null;
     }
     this.isPlaying = false;
+  },
+
+  suspend: function() {
+    if (this.audioContext && this.audioContext.state === 'running') {
+      this.audioContext.suspend();
+    }
+  },
+
+  resume: function() {
+    if (this.audioContext && this.audioContext.state === 'suspended' && this.isPlaying) {
+      this.audioContext.resume();
+    }
   }
 };
