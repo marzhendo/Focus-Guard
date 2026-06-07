@@ -42,7 +42,7 @@ window.checkAchievements = function(history) {
   const achievements = loadAchievements();
   
   // Feature 3: Achievement Hardening - Only use reliable sessions for achievements
-  const reliableHistory = history.filter(s => s.isReliableSession === true);
+  const reliableHistory = history.filter(s => s.isReliableSession === true && s.isSimulation !== true);
   
   if (reliableHistory.length === 0) return achievements;
 

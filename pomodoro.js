@@ -502,6 +502,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- ADMIN CONTROLS ---
+  const btnAdminSkipBreak = document.getElementById('btnAdminSkipBreak');
+  if (btnAdminSkipBreak) {
+    btnAdminSkipBreak.addEventListener('click', () => {
+      if (currentState === STATES.FOCUS_ACTIVE || currentState === STATES.WARNING || currentState === STATES.ALERT) {
+        window.sessionMetrics.isSimulation = true;
+        generateSessionReport("SESSION COMPLETE", "completed");
+        changeState(STATES.BREAK_TIME);
+        startTimer();
+      }
+    });
+  }
+
+  const btnAdminSkipComplete = document.getElementById('btnAdminSkipComplete');
+  if (btnAdminSkipComplete) {
+    btnAdminSkipComplete.addEventListener('click', () => {
+      if (currentState === STATES.FOCUS_ACTIVE || currentState === STATES.WARNING || currentState === STATES.ALERT) {
+        window.sessionMetrics.focusTime = 25 * 60; // Mock full focus
+        window.sessionMetrics.isSimulation = true;
+        generateSessionReport("SESSION COMPLETE", "completed");
+      }
+    });
+  }
+
+  const btnAdminWarning = document.getElementById('btnAdminWarning');
+  if (btnAdminWarning) {
+    btnAdminWarning.addEventListener('click', () => {
+      if (currentState === STATES.FOCUS_ACTIVE) {
+        changeState(STATES.WARNING);
+      }
+    });
+  }
+
+  const btnAdminAlert = document.getElementById('btnAdminAlert');
+  if (btnAdminAlert) {
+    btnAdminAlert.addEventListener('click', () => {
+      if (currentState === STATES.FOCUS_ACTIVE || currentState === STATES.WARNING) {
+        changeState(STATES.ALERT);
+      }
+    });
+  }
+
+  const btnAdminReset = document.getElementById('btnAdminReset');
+  if (btnAdminReset) {
+    btnAdminReset.addEventListener('click', () => {
+      window.sessionMetrics.isActive = false;
+      if (window.FocusEnvironment) window.FocusEnvironment.stop();
+      changeState(STATES.IDLE);
+    });
+  }
+
   // Volume slider event listener
   const envVolumeInput = document.getElementById('focusEnvVolume');
   if (envVolumeInput) {
@@ -829,7 +880,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const monColor = tierInfo.colorClass;
 
         let statusTag = "";
-        if (session.sessionType === "invalid") {
+        if (session.isSimulation) {
+          statusTag = `<span class="ml-2 px-2 py-0.5 rounded text-[8px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">SIMULATION</span>`;
+        } else if (session.sessionType === "invalid") {
           statusTag = `<span class="ml-2 px-2 py-0.5 rounded text-[8px] font-bold bg-alert-red/20 text-alert-red border border-alert-red/30">INVALID</span>`;
         } else if (session.sessionType === "aborted") {
           statusTag = `<span class="ml-2 px-2 py-0.5 rounded text-[8px] font-bold bg-warning-yellow/20 text-warning-yellow border border-warning-yellow/30">ABORTED</span>`;
@@ -874,7 +927,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateStr = new Date(session.timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute:'2-digit' });
     
     let statusTagHTML = "";
-    if (session.sessionType === "invalid") {
+    if (session.isSimulation) {
+      statusTagHTML = `<span class="ml-3 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">SIMULATION</span>`;
+    } else if (session.sessionType === "invalid") {
       statusTagHTML = `<span class="ml-3 px-2 py-0.5 rounded text-[10px] font-bold bg-alert-red/20 text-alert-red border border-alert-red/30">INVALID</span>`;
     } else if (session.sessionType === "aborted") {
       statusTagHTML = `<span class="ml-3 px-2 py-0.5 rounded text-[10px] font-bold bg-warning-yellow/20 text-warning-yellow border border-warning-yellow/30">ABORTED</span>`;
