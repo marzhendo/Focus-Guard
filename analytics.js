@@ -8,7 +8,7 @@ window.ProductivityAnalytics = {
     const emptyState = document.getElementById('trend-empty-state');
 
     // Filter only reliable sessions for Trend
-    const completedHistory = history ? history.filter(s => s.isReliableSession === true) : [];
+    const completedHistory = history ? history.filter(s => s.isReliableSession === true && s.isSimulation !== true) : [];
 
     // Clear existing SVG content
     svg.innerHTML = '';
@@ -155,7 +155,7 @@ window.ProductivityAnalytics = {
     grid.innerHTML = '';
 
     // Calculate progression text based on reliable history
-    const reliableHistory = history.filter(s => s.isReliableSession === true);
+    const reliableHistory = history.filter(s => s.isReliableSession === true && s.isSimulation !== true);
 
     const getProgress = (id) => {
       switch(id) {
@@ -232,7 +232,7 @@ window.ProductivityAnalytics = {
     const alerts = latest.alerts || 0;
     
     // Previous reliable session for trend
-    const reliableHistory = history.filter(s => s.isReliableSession === true);
+    const reliableHistory = history.filter(s => s.isReliableSession === true && s.isSimulation !== true);
     let prevScore = null;
     if (reliableHistory.length >= 2) {
       // the last one is either the current one (if reliable) or previous
@@ -315,7 +315,7 @@ window.ProductivityAnalytics = {
     
     if (!tbody || !bestEnvEl || !bestEnvScoreEl) return;
     
-    const reliableHistory = history ? history.filter(s => s.isReliableSession === true) : [];
+    const reliableHistory = history ? history.filter(s => s.isReliableSession === true && s.isSimulation !== true) : [];
     
     const envStats = {};
     reliableHistory.forEach(s => {
