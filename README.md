@@ -44,7 +44,3 @@ python -m http.server 5500
 **Designed and engineered by Marzhendo Galang Saputra.**
 
 I am deeply passionate about clean software architecture, practical applications of AI, and crafting highly polished, modern UI/UX experiences. 
-
-**Other Projects:**
-- [Clash of Minds](#) - A competitive full-stack web application.
-- [PurePress](#) - An advanced, client-side Image and PDF compression tool.
