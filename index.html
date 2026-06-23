@@ -49,7 +49,20 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
   <script defer src="auth.js"></script>
   <script defer src="noise.js"></script>
-  <script defer src="pomodoro.js"></script>
+  <script defer src="js/pomodoro-core.js"></script>
+  <script defer src="js/pomodoro-ui.js"></script>
+  <script defer src="js/pomodoro-settings.js"></script>
+  <script defer src="js/pomodoro-reporter.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      window.FocusGuard.UI.cacheElements();
+      window.FocusGuard.Settings.init();
+      window.FocusGuard.Core.init();
+      if (window.FocusGuard.Reporter.init) {
+        window.FocusGuard.Reporter.init();
+      }
+    });
+  </script>
   <script defer src="history.js"></script>
   <script defer src="analytics.js"></script>
   <script defer src="ai.js"></script>
@@ -148,7 +161,7 @@
     <header class="p-8 flex justify-between items-center z-10">
       <div>
         <h2 id="sessionTitle" class="font-display text-3xl font-bold text-white tracking-tight">Focus Session</h2>
-        <p id="sessionSubtitle" class="text-white/70 font-sans text-xs mt-2">System Armed & Monitoring</p>
+        <p id="sessionSubtitle" class="text-white/70 font-sans text-xs mt-2">Deep Work Initiated</p>
       </div>
       <div id="statusCard" class="glass-panel px-5 py-2.5 flex items-center gap-3 border-focus-green/20 transition-colors duration-500">
         <div id="statusDot" class="w-2 h-2 rounded-full bg-focus-green animate-pulse shadow-[0_0_8px_#39FF14] transition-colors duration-500"></div>
