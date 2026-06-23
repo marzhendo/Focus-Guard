@@ -13,7 +13,8 @@ const DEFAULT_ACHIEVEMENTS = [
 
 function loadAchievements() {
   try {
-    const data = localStorage.getItem("focusGuardAchievements");
+    const userEmail = window.RoleManager && window.RoleManager.getEmail ? window.RoleManager.getEmail() : 'guest';
+    const data = localStorage.getItem('focusGuardAchievements_' + userEmail);
     if (data) {
       const parsed = JSON.parse(data);
       // Merge with defaults to ensure all keys exist
@@ -30,7 +31,8 @@ function loadAchievements() {
 
 function saveAchievements(achievements) {
   try {
-    localStorage.setItem("focusGuardAchievements", JSON.stringify(achievements));
+    const userEmail = window.RoleManager && window.RoleManager.getEmail ? window.RoleManager.getEmail() : 'guest';
+    localStorage.setItem('focusGuardAchievements_' + userEmail, JSON.stringify(achievements));
   } catch (e) {
     console.warn("Failed to save achievements", e);
   }

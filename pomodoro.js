@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadSettings() {
     try {
-      const data = localStorage.getItem("focusGuardSettings");
+      const userEmail = window.RoleManager && window.RoleManager.getEmail ? window.RoleManager.getEmail() : 'guest';
+      const data = localStorage.getItem('focusGuardSettings_' + userEmail);
       return data ? { ...defaultSettings, ...JSON.parse(data) } : { ...defaultSettings };
     } catch {
       return { ...defaultSettings };
@@ -22,7 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveSettings() {
     try {
-      localStorage.setItem("focusGuardSettings", JSON.stringify(window.focusGuardSettings));
+      const userEmail = window.RoleManager && window.RoleManager.getEmail ? window.RoleManager.getEmail() : 'guest';
+      localStorage.setItem('focusGuardSettings_' + userEmail, JSON.stringify(window.focusGuardSettings));
     } catch (e) {
       console.warn("Gagal menyimpan Settings ke LocalStorage", e);
     }
@@ -808,8 +810,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnClearHistory) {
     btnClearHistory.addEventListener('click', () => {
       if (confirm("Are you sure you want to clear all session history and achievements? This action cannot be undone.")) {
-        localStorage.removeItem("focusGuardHistory");
-        localStorage.removeItem("focusGuardAchievements");
+        const userEmail = window.RoleManager && window.RoleManager.getEmail ? window.RoleManager.getEmail() : 'guest';
+        localStorage.removeItem('focusGuardHistory_' + userEmail);
+        localStorage.removeItem('focusGuardAchievements_' + userEmail);
         renderAnalytics();
       }
     });
@@ -1045,7 +1048,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- SESSION HISTORY MANAGER ---
   function loadSessionHistory() {
     try {
-      const data = localStorage.getItem("focusGuardHistory");
+      const userEmail = window.RoleManager && window.RoleManager.getEmail ? window.RoleManager.getEmail() : 'guest';
+      const data = localStorage.getItem('focusGuardHistory_' + userEmail);
       return data ? JSON.parse(data) : [];
     } catch {
       return [];
@@ -1054,7 +1058,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveSessionHistory(historyArray) {
     try {
-      localStorage.setItem("focusGuardHistory", JSON.stringify(historyArray));
+      const userEmail = window.RoleManager && window.RoleManager.getEmail ? window.RoleManager.getEmail() : 'guest';
+      localStorage.setItem('focusGuardHistory_' + userEmail, JSON.stringify(historyArray));
     } catch (e) {
       console.warn("Gagal menyimpan ke LocalStorage", e);
     }

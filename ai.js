@@ -26,8 +26,11 @@ const overlayCanvas = document.getElementById("overlayCanvas");
 const overlayCtx = overlayCanvas ? overlayCanvas.getContext("2d") : null;
 const faceLostStatus = document.getElementById("faceLostStatus");
 
+let aiInitialized = false;
 // Load the image model and setup the webcam
-async function initAI() {
+window.initAI = async function() {
+    if (aiInitialized) return;
+    aiInitialized = true;
     if (webcamStatus) webcamStatus.textContent = "Loading Model...";
     
     const modelURL = URL + "model.json";
@@ -175,10 +178,10 @@ async function predict() {
     
     const state = window.getCurrentState();
 
-    // Log the probabilities to console exactly as requested
-    for (let i = 0; i < maxPredictions; i++) {
-        console.log(prediction[i].className + ': ' + prediction[i].probability.toFixed(2));
-    }
+    // Performance Optimization: Console logging disabled to prevent devtools freezing
+    // for (let i = 0; i < maxPredictions; i++) {
+    //     console.log(prediction[i].className + ': ' + prediction[i].probability.toFixed(2));
+    // }
     
     // Dynamically find classes based on string inclusion to avoid index mismatch
     const distracObj = prediction.find(p => p.className.toLowerCase().includes('terdistraksi'));
@@ -237,5 +240,5 @@ async function predict() {
     }
 }
 
-// Start AI initialization automatically when the script loads
-initAI();
+// AI initialization is now deferred and handled post-authentication
+// window.initAI();

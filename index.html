@@ -43,6 +43,7 @@
 
   <link rel="stylesheet" href="css/main.css">
   <!-- Scripts -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
@@ -56,8 +57,8 @@
 <body class="bg-bg-deep text-white font-body h-screen w-screen overflow-hidden flex selection:bg-focus-green selection:text-black">
 
   <!-- Login Overlay -->
-  <div id="login-view" class="fixed inset-0 z-[100] bg-bg-deep flex flex-col items-center justify-center p-6 hidden">
-    <div class="glass-panel p-8 w-96 flex flex-col items-center border border-white/10 relative overflow-hidden">
+  <div id="login-view" class="fixed inset-0 z-[100] bg-bg-deep flex flex-col items-center justify-center p-6 hidden" style="background-image: radial-gradient(circle at center, rgba(168,222,163,0.05) 0%, transparent 60%), radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px); background-size: 100% 100%, 20px 20px;">
+    <div class="glass-panel p-8 w-96 flex flex-col items-center border border-white/10 relative overflow-hidden shadow-[0_0_40px_rgba(168,230,163,0.4),_0_0_120px_rgba(168,230,163,0.3)]">
       <div class="absolute inset-0 bg-focus-green/5 opacity-50 blur-xl"></div>
       
       <div class="w-12 h-12 rounded-full bg-focus-green shadow-neon-glow flex items-center justify-center mb-6 relative z-10">
@@ -67,19 +68,16 @@
       </div>
 
       <h2 class="font-display text-2xl font-bold mb-1 relative z-10">Welcome to FocusGuard</h2>
-      <p class="text-xs text-white/50 font-mono tracking-widest uppercase mb-8 relative z-10">AI Focus Management</p>
+      <p class="text-xs text-white/70 font-sans mb-8 relative z-10">AI Focus Management</p>
 
-      <div class="w-full space-y-4 relative z-10">
-        <div>
-          <label class="block text-[10px] text-white/50 font-mono uppercase tracking-widest mb-1">Username</label>
-          <input type="text" id="loginUsername" placeholder="admin / user" class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-focus-green/50 focus:bg-black/60 transition-colors">
-        </div>
-        <div>
-          <label class="block text-[10px] text-white/50 font-mono uppercase tracking-widest mb-1">Password</label>
-          <input type="password" id="loginPassword" placeholder="admin123 / user123" class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-focus-green/50 focus:bg-black/60 transition-colors">
-        </div>
-        <p id="loginError" class="text-xs text-alert-red font-mono hidden">Invalid credentials.</p>
-        <button id="btnLogin" class="w-full btn-primary mt-2">Login</button>
+      <div class="w-full space-y-4 relative z-10 flex flex-col items-center">
+        <div id="g_id_onload" data-client_id="220296346187-os72jvgdd87kokem8pochj94f1h8amqi.apps.googleusercontent.com" data-callback="handleGoogleLogin" data-auto_prompt="false"></div>
+        <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="signin_with" data-shape="rectangular" data-width="350"></div>
+        <p id="loginError" class="text-xs text-alert-red font-sans hidden">Authentication failed.</p>
+        
+        <p class="font-sans text-[11px] text-white/50 mt-8 max-w-[280px] mx-auto leading-relaxed text-center">
+          Dengan melanjutkan, Anda menyetujui <a href="#" class="text-[#A8E6A3] hover:underline">Syarat Layanan</a> & <a href="#" class="text-[#A8E6A3] hover:underline">Kebijakan Privasi</a> FocusGuard.
+        </p>
       </div>
     </div>
   </div>
@@ -94,7 +92,7 @@
       </svg>
       <div>
         <p class="font-display font-bold text-sm">⚠ Kembali Fokus</p>
-        <p id="warningText" class="font-mono text-xs opacity-80">Anda terdistraksi</p>
+        <p id="warningText" class="font-sans text-xs opacity-80">Anda terdistraksi</p>
       </div>
     </div>
   </div>
@@ -115,11 +113,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         Dashboard
       </a>
-      <a href="#" id="nav-analytics" class="flex items-center gap-3 px-4 py-3 rounded-md text-white/50 hover:text-white hover:bg-white/5 transition-colors font-medium">
+      <a href="#" id="nav-analytics" class="flex items-center gap-3 px-4 py-3 rounded-md text-white/70 hover:text-white hover:bg-white/5 transition-colors font-medium">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
         Analytics
       </a>
-      <a href="#" id="nav-settings" class="flex items-center gap-3 px-4 py-3 rounded-md text-white/50 hover:text-white hover:bg-white/5 transition-colors font-medium">
+      <a href="#" id="nav-settings" class="flex items-center gap-3 px-4 py-3 rounded-md text-white/70 hover:text-white hover:bg-white/5 transition-colors font-medium">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
         Settings
       </a>
@@ -128,15 +126,15 @@
     <!-- User Profile Snippet -->
     <div class="p-6 border-t border-white/5">
       <div class="flex items-center gap-3 mb-3">
-        <div class="w-10 h-10 rounded-full bg-surface-dark border border-white/10 flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+        <div class="w-10 h-10 rounded-full bg-surface-dark border border-white/10 flex items-center justify-center overflow-hidden">
+          <img id="userAvatar" class="w-10 h-10 rounded-full border border-white/10 hidden" alt="User Avatar" referrerpolicy="no-referrer">
         </div>
         <div class="flex-1 overflow-hidden">
           <p id="userProfileName" class="text-sm font-medium truncate">Demo User</p>
-          <p id="userProfileRole" class="text-[10px] text-white/40 font-mono mt-0.5 truncate uppercase tracking-widest">USER</p>
+          <p id="userProfileRole" class="text-[10px] text-white/60 font-sans mt-0.5 truncate">USER</p>
         </div>
       </div>
-      <button id="btnLogout" class="w-full py-2 text-[10px] font-mono text-white/40 uppercase tracking-widest border border-white/10 rounded hover:bg-white/5 transition-colors">Logout</button>
+      <button id="btnLogout" class="w-full py-2 text-[10px] font-sans text-white/60 border border-white/10 rounded hover:bg-white/5 transition-colors">Logout</button>
     </div>
   </aside>
 
@@ -150,11 +148,11 @@
     <header class="p-8 flex justify-between items-center z-10">
       <div>
         <h2 id="sessionTitle" class="font-display text-3xl font-bold text-white tracking-tight">Focus Session</h2>
-        <p id="sessionSubtitle" class="text-white/50 font-mono text-xs mt-2 uppercase tracking-widest">System Armed & Monitoring</p>
+        <p id="sessionSubtitle" class="text-white/70 font-sans text-xs mt-2">System Armed & Monitoring</p>
       </div>
       <div id="statusCard" class="glass-panel px-5 py-2.5 flex items-center gap-3 border-focus-green/20 transition-colors duration-500">
         <div id="statusDot" class="w-2 h-2 rounded-full bg-focus-green animate-pulse shadow-[0_0_8px_#39FF14] transition-colors duration-500"></div>
-        <span id="statusText" class="font-mono text-xs text-focus-green uppercase tracking-[0.2em] font-bold transition-colors duration-500">AI Active</span>
+        <span id="statusText" class="font-sans text-xs text-focus-green font-bold transition-colors duration-500">AI Active</span>
       </div>
     </header>
 
@@ -164,30 +162,30 @@
       <!-- Giant Timer Display -->
       <div class="relative mb-14 group">
         <!-- The "Focus Pulse" Rings -->
-        <div id="pulseRing1" class="absolute inset-0 rounded-full border border-focus-green/30 scale-[1.15] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] opacity-50 transition-colors duration-500"></div>
-        <div id="pulseRing2" class="absolute inset-0 rounded-full border border-focus-green/20 scale-[1.3] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite_1s] opacity-30 transition-colors duration-500"></div>
+        <div id="pulseRing1" class="absolute inset-0 rounded-full border border-[#A8E6A3] scale-[1.15] opacity-20 transition-colors duration-500"></div>
+        <div id="pulseRing2" class="absolute inset-0 rounded-full border border-[#A8E6A3] scale-[1.3] opacity-10 transition-colors duration-500"></div>
         
-        <div id="timerDisplay" class="text-[14rem] font-mono font-bold leading-none text-focus-green text-glow tabular-nums tracking-tighter cursor-default transition-colors duration-500">
+        <div id="timerDisplay" class="text-[10rem] font-mono font-bold leading-none text-[#A8E6A3] tabular-nums tracking-tighter cursor-default transition-colors duration-500">
           25:00
         </div>
       </div>
 
       <!-- Session Goal Input -->
       <div id="sessionGoalContainer" class="mb-6 w-80 relative z-50">
-        <label for="sessionGoalInput" class="block text-[10px] text-white/50 font-mono uppercase tracking-widest mb-2 text-center">Session Goal</label>
-        <input type="text" id="sessionGoalInput" placeholder="What are you focusing on?" maxlength="50" class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white text-center focus:outline-none focus:border-focus-green/50 focus:bg-black/60 transition-colors placeholder:text-white/20">
+        <label for="sessionGoalInput" class="block text-[10px] text-white/70 font-sans mb-2 text-center">Session Goal</label>
+        <input type="text" id="sessionGoalInput" placeholder="What are you focusing on?" maxlength="50" class="w-full bg-black/40 border border-white/15 rounded-lg px-4 py-3 text-sm text-white text-center placeholder:text-white/40 focus:outline-none focus:border-[#A8E6A3]/60 focus:ring-1 focus:ring-[#A8E6A3]/30 focus:bg-black/60 transition-all duration-200">
       </div>
 
       <!-- Focus Environment Selector -->
-      <div id="focusEnvironmentContainer" class="mb-8 w-80 relative z-50 bg-black/40 border border-white/10 rounded-lg p-4">
-        <label class="block text-[10px] text-white/50 font-mono uppercase tracking-widest mb-3 text-center border-b border-white/10 pb-2">Focus Environment</label>
+      <div id="focusEnvironmentContainer" class="mb-8 w-80 relative z-50 bg-black/40 border border-white/15 rounded-lg p-4">
+        <label class="block text-[10px] text-white/70 font-sans mb-3 text-center border-b border-white/10 pb-2">Focus Environment</label>
         
-        <div id="envLockedSummary" class="hidden mb-4 p-4 rounded-lg border border-white/10 bg-white/5 group relative">
+        <div id="envLockedSummary" class="hidden mb-4 p-4 rounded-lg border border-white/15 bg-white/5 group relative">
           <div class="flex items-center justify-between mb-1">
             <span id="lockedEnvName" class="font-bold text-sm text-white flex items-center gap-2">🎧 Brown Noise</span>
             <span class="text-xs">🔒</span>
           </div>
-          <p class="text-[10px] text-white/50">Environment Locked</p>
+          <p class="text-[10px] text-white/70">Environment Locked</p>
           
           <!-- Tooltip -->
           <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-black/90 border border-white/10 rounded text-[10px] text-white/70 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
@@ -210,10 +208,10 @@
             <div>
               <span class="block font-bold text-sm text-white mb-1">Pink Noise</span>
               <div class="text-[10px] text-white/60 mb-1 space-y-0.5">
-                <span class="block text-white/40 font-mono uppercase">Best For:</span>
+                <span class="block text-white/60 font-sans">Best For:</span>
                 <span class="block">✓ Studying &nbsp;✓ Reading &nbsp;✓ Courses</span>
               </div>
-              <div class="text-[9px] text-focus-green/80 font-mono mt-2 bg-focus-green/10 inline-block px-1.5 py-0.5 rounded">🎧 Best experienced with headphones.</div>
+              <div class="text-[9px] text-focus-green/80 font-sans mt-2 bg-focus-green/10 inline-block px-1.5 py-0.5 rounded">🎧 Best experienced with headphones.</div>
             </div>
           </label>
 
@@ -223,10 +221,10 @@
             <div>
               <span class="block font-bold text-sm text-white mb-1">Brown Noise</span>
               <div class="text-[10px] text-white/60 mb-1 space-y-0.5">
-                <span class="block text-white/40 font-mono uppercase">Best For:</span>
+                <span class="block text-white/60 font-sans">Best For:</span>
                 <span class="block">✓ Programming &nbsp;✓ Deep Work &nbsp;✓ Writing</span>
               </div>
-              <div class="text-[9px] text-focus-green/80 font-mono mt-2 bg-focus-green/10 inline-block px-1.5 py-0.5 rounded">🎧 Best experienced with headphones.</div>
+              <div class="text-[9px] text-focus-green/80 font-sans mt-2 bg-focus-green/10 inline-block px-1.5 py-0.5 rounded">🎧 Best experienced with headphones.</div>
             </div>
           </label>
 
@@ -235,7 +233,7 @@
         
         <!-- Volume Slider -->
         <div class="flex items-center gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z" /></svg>
           <input type="range" id="focusEnvVolume" min="0" max="100" value="50" class="w-full accent-focus-green h-1 bg-white/20 rounded-lg appearance-none cursor-pointer">
         </div>
       </div>
@@ -249,13 +247,13 @@
 
       <!-- Admin Controls -->
       <div id="adminControls" class="hidden mt-8 w-80 relative z-50 glass-panel border-warning-yellow/30 p-4">
-        <label class="block text-[10px] text-warning-yellow font-mono uppercase tracking-widest mb-3 text-center border-b border-warning-yellow/30 pb-2">Admin Controls</label>
-        <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
-          <button id="btnAdminSkipBreak" class="bg-white/5 border border-white/10 text-white/70 py-2 rounded hover:bg-white/10 transition-colors uppercase tracking-widest">Skip to Break</button>
-          <button id="btnAdminSkipComplete" class="bg-white/5 border border-white/10 text-white/70 py-2 rounded hover:bg-white/10 transition-colors uppercase tracking-widest">Skip to Complete</button>
-          <button id="btnAdminWarning" class="bg-warning-yellow/10 border border-warning-yellow/30 text-warning-yellow py-2 rounded hover:bg-warning-yellow/20 transition-colors uppercase tracking-widest">Trig. Warning</button>
-          <button id="btnAdminAlert" class="bg-alert-red/10 border border-alert-red/30 text-alert-red py-2 rounded hover:bg-alert-red/20 transition-colors uppercase tracking-widest">Trig. Alert</button>
-          <button id="btnAdminReset" class="col-span-2 bg-white/5 border border-white/10 text-white/70 py-2 rounded hover:bg-white/10 transition-colors uppercase tracking-widest">Reset Session</button>
+        <label class="block text-[10px] text-warning-yellow font-sans mb-3 text-center border-b border-warning-yellow/30 pb-2">Admin Controls</label>
+        <div class="grid grid-cols-2 gap-2 text-[10px] font-sans">
+          <button id="btnAdminSkipBreak" class="bg-white/5 border border-white/15 text-white/70 py-2 rounded hover:bg-white/10 transition-colors">Skip to Break</button>
+          <button id="btnAdminSkipComplete" class="bg-white/5 border border-white/15 text-white/70 py-2 rounded hover:bg-white/10 transition-colors">Skip to Complete</button>
+          <button id="btnAdminWarning" class="bg-warning-yellow/10 border border-warning-yellow/30 text-warning-yellow py-2 rounded hover:bg-warning-yellow/20 transition-colors">Trig. Warning</button>
+          <button id="btnAdminAlert" class="bg-alert-red/10 border border-alert-red/30 text-alert-red py-2 rounded hover:bg-alert-red/20 transition-colors">Trig. Alert</button>
+          <button id="btnAdminReset" class="col-span-2 bg-white/5 border border-white/15 text-white/70 py-2 rounded hover:bg-white/10 transition-colors">Reset Session</button>
         </div>
       </div>
     </div>
@@ -273,8 +271,8 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
-          <span class="font-mono text-xs uppercase tracking-widest font-bold">Webcam Feed</span>
-          <span id="webcam-status" class="font-mono text-[10px] mt-1.5 text-focus-green/60 uppercase tracking-wider">Awaiting Signal...</span>
+          <span class="font-sans text-xs font-bold">Webcam Feed</span>
+          <span id="webcam-status" class="font-sans text-[10px] mt-1.5 text-focus-green/60">Awaiting Signal...</span>
           
           <!-- Cyber Scanning Line Effect -->
           <div class="absolute top-0 left-0 w-full h-[2px] bg-focus-green/40 shadow-[0_0_10px_rgba(57,255,20,0.6)] animate-scan"></div>
@@ -290,7 +288,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-alert-red mb-2 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <p class="text-alert-red font-bold font-mono uppercase tracking-widest text-center animate-pulse text-sm">Face Not<br>Detected</p>
+            <p class="text-alert-red font-bold font-sans text-center animate-pulse text-sm">Face Not<br>Detected</p>
           </div>
         </div>
       </div>
@@ -335,9 +333,9 @@
     <header class="p-8 pb-4 flex justify-between items-center">
       <div>
         <h2 class="font-display text-3xl font-bold text-white tracking-tight">Analytics</h2>
-        <p class="text-white/50 font-mono text-xs mt-2 uppercase tracking-widest">Session History & Performance</p>
+        <p class="text-white/70 font-sans text-xs mt-2">Session History & Performance</p>
       </div>
-      <button id="btnClearHistory" class="px-4 py-2 border border-alert-red/30 text-alert-red bg-alert-red/10 rounded font-mono text-[10px] uppercase tracking-widest hover:bg-alert-red/20 transition-colors">
+      <button id="btnClearHistory" class="px-4 py-2 border border-alert-red/30 text-alert-red bg-alert-red/10 rounded font-sans text-[10px] hover:bg-alert-red/20 transition-colors">
         Clear History
       </button>
     </header>
@@ -349,7 +347,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
         <p class="text-white/60 font-medium">No session history available.</p>
-        <p class="text-white/40 font-mono text-sm mt-2">Complete your first focus session to unlock analytics.</p>
+        <p class="text-white/60 font-sans text-sm mt-2">Complete your first focus session to unlock analytics.</p>
       </div>
 
       <!-- Dashboard Content -->
@@ -358,29 +356,29 @@
         <div class="grid grid-cols-5 gap-4">
           <!-- Card 1 -->
           <div class="glass-panel p-6 border-white/5 flex flex-col">
-            <span class="text-white/50 font-mono text-[10px] uppercase tracking-widest mb-2">Avg Focus Score</span>
+            <span class="text-white/70 font-sans text-[10px] mb-2">Avg Focus Score</span>
             <span id="kpi-avg-score" class="font-display text-4xl font-bold text-focus-green tabular-nums">0</span>
           </div>
           <!-- Card 2 -->
           <div class="glass-panel p-6 border-white/5 flex flex-col">
-            <span class="text-white/50 font-mono text-[10px] uppercase tracking-widest mb-2">Avg Monitoring</span>
+            <span class="text-white/70 font-sans text-[10px] mb-2">Avg Monitoring</span>
             <span id="kpi-avg-monitoring" class="font-display text-4xl font-bold text-white tabular-nums">0%</span>
           </div>
           <!-- Card 3 -->
           <div class="glass-panel p-6 border-white/5 flex flex-col">
-            <span class="text-white/50 font-mono text-[10px] uppercase tracking-widest mb-2">Reliable Sessions</span>
+            <span class="text-white/70 font-sans text-[10px] mb-2">Reliable Sessions</span>
             <span id="kpi-total-sessions" class="font-display text-4xl font-bold text-white tabular-nums">0</span>
           </div>
           <!-- Card 4 -->
           <div class="glass-panel p-6 border-white/5 flex flex-col">
-            <span class="text-white/50 font-mono text-[10px] uppercase tracking-widest mb-2">Best Score</span>
+            <span class="text-white/70 font-sans text-[10px] mb-2">Best Score</span>
             <span id="kpi-best-score" class="font-display text-4xl font-bold text-focus-green tabular-nums">0</span>
           </div>
           <!-- Card 5 -->
           <div class="glass-panel p-6 border-white/5 flex flex-col">
-            <span class="text-white/50 font-mono text-[10px] uppercase tracking-widest mb-2">Best Environment</span>
+            <span class="text-white/70 font-sans text-[10px] mb-2">Best Environment</span>
             <span id="kpi-best-env" class="font-display text-2xl font-bold text-white tabular-nums truncate">N/A</span>
-            <span id="kpi-best-env-score" class="text-white/40 font-mono text-xs mt-1">- Avg Score</span>
+            <span id="kpi-best-env-score" class="text-white/60 font-sans text-xs mt-1">- Avg Score</span>
           </div>
         </div>
 
@@ -407,9 +405,9 @@
             <div class="flex justify-between items-center mb-6">
               <div>
                 <h3 class="text-lg font-bold text-white">Focus Score Trend</h3>
-                <p class="text-xs text-white/40 font-mono uppercase tracking-widest mt-1">Performance over time</p>
+                <p class="text-xs text-white/60 font-sans tracking-widest mt-1">Performance over time</p>
               </div>
-              <div id="trend-status-badge" class="px-3 py-1 rounded-full text-[10px] font-bold font-mono uppercase tracking-widest border bg-black/30">
+              <div id="trend-status-badge" class="px-3 py-1 rounded-full text-[10px] font-bold font-sans border bg-black/30">
                 STABLE
               </div>
             </div>
@@ -421,7 +419,7 @@
               <div id="trend-empty-state" class="hidden absolute inset-0 flex flex-col items-center justify-center text-center px-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white/20 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                 <p class="text-sm font-bold text-white/60 mb-1">No reliable sessions available yet.</p>
-                <p class="text-xs text-white/40">Complete a monitored session to generate performance trends.</p>
+                <p class="text-xs text-white/60">Complete a monitored session to generate performance trends.</p>
               </div>
             </div>
           </div>
@@ -429,7 +427,7 @@
           <!-- Achievements Section -->
           <div class="col-span-1 glass-panel p-6 border-white/5 flex flex-col">
             <h3 class="text-lg font-bold text-white mb-1">Achievements</h3>
-            <p class="text-xs text-white/40 font-mono uppercase tracking-widest mb-6">Milestones Unlocked</p>
+            <p class="text-xs text-white/60 font-sans tracking-widest mb-6">Milestones Unlocked</p>
             
             <div id="achievements-grid" class="flex flex-col gap-3 overflow-y-auto max-h-[200px] pr-2 custom-scrollbar">
               <!-- Rendered via JS -->
@@ -441,12 +439,12 @@
         <!-- Focus Environment Performance Section -->
         <div class="glass-panel p-6 border-white/5 flex flex-col">
           <h3 class="text-lg font-bold text-white mb-1">Focus Environment Performance</h3>
-          <p class="text-xs text-white/40 font-mono uppercase tracking-widest mb-6">Compare Focus Sounds</p>
+          <p class="text-xs text-white/60 font-sans tracking-widest mb-6">Compare Focus Sounds</p>
           
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="border-b border-white/10 text-xs font-mono text-white/50 uppercase tracking-wider">
+                <tr class="border-b border-white/10 text-xs font-sans text-white/70">
                   <th class="px-6 py-4 font-normal">Environment</th>
                   <th class="px-6 py-4 font-normal">Total Sessions</th>
                   <th class="px-6 py-4 font-normal">Avg Focus Score</th>
@@ -466,7 +464,7 @@
           </div>
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="text-left text-[10px] font-mono uppercase tracking-widest text-white/50 border-b border-white/5">
+              <tr class="text-left text-[10px] font-sans text-white/70 border-b border-white/5">
                 <th class="px-6 py-4 font-normal">Date</th>
                 <th class="px-6 py-4 font-normal">Goal</th>
                 <th class="px-6 py-4 font-normal">Score</th>
@@ -488,16 +486,16 @@
     <header class="p-8 pb-4 border-b border-white/5 flex justify-between items-center">
       <div>
         <h2 class="font-display text-3xl font-bold text-white tracking-tight">Settings</h2>
-        <p class="text-white/50 font-mono text-xs mt-2 uppercase tracking-widest">System Configuration</p>
+        <p class="text-white/70 font-sans text-xs mt-2">System Configuration</p>
       </div>
-      <button id="btnRestoreDefaults" class="px-4 py-2 border border-white/10 rounded-md text-sm font-mono text-white/50 hover:text-white hover:bg-white/5 transition-colors">Restore Defaults</button>
+      <button id="btnRestoreDefaults" class="px-4 py-2 border border-white/10 rounded-md text-sm font-sans text-white/70 hover:text-white hover:bg-white/5 transition-colors">Restore Defaults</button>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8 space-y-8">
       
       <!-- Monitoring Category -->
       <section class="space-y-4">
-        <h3 class="font-mono text-sm text-focus-green uppercase tracking-widest flex items-center gap-2">
+        <h3 class="font-sans text-sm text-focus-green flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           Monitoring
         </h3>
@@ -507,9 +505,9 @@
           <div class="space-y-2">
             <div class="flex justify-between items-center">
               <label for="warningDelayInput" class="font-medium text-white/90">Warning Delay</label>
-              <span id="warningDelayValue" class="font-mono text-sm text-white/50">5s</span>
+              <span id="warningDelayValue" class="font-mono text-sm text-white/70">5s</span>
             </div>
-            <p class="text-xs text-white/40 mb-2">Time before a minor distraction triggers a warning.</p>
+            <p class="text-xs text-white/60 mb-2">Time before a minor distraction triggers a warning.</p>
             <input type="range" id="warningDelayInput" min="3" max="15" step="1" value="5" class="w-full accent-focus-green bg-white/10 rounded-lg appearance-none h-2 cursor-pointer">
           </div>
 
@@ -519,9 +517,9 @@
           <div class="space-y-2">
             <div class="flex justify-between items-center">
               <label for="alertDelayInput" class="font-medium text-white/90">Alert Delay</label>
-              <span id="alertDelayValue" class="font-mono text-sm text-white/50">10s</span>
+              <span id="alertDelayValue" class="font-mono text-sm text-white/70">10s</span>
             </div>
-            <p class="text-xs text-white/40 mb-2">Time before an ongoing distraction escalates to an alert.</p>
+            <p class="text-xs text-white/60 mb-2">Time before an ongoing distraction escalates to an alert.</p>
             <input type="range" id="alertDelayInput" min="5" max="30" step="1" value="10" class="w-full accent-alert-red bg-white/10 rounded-lg appearance-none h-2 cursor-pointer">
           </div>
         </div>
@@ -529,7 +527,7 @@
 
       <!-- Audio Category -->
       <section class="space-y-4">
-        <h3 class="font-mono text-sm text-focus-green uppercase tracking-widest flex items-center gap-2">
+        <h3 class="font-sans text-sm text-focus-green flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.898a9 9 0 010 12.728M15.536 8.464l-2.828 2.828m2.828-2.828l-2.828-2.828M15.536 8.464l-2.828 2.828m2.828-2.828l-2.828-2.828m2.828 2.828l2.828-2.828" /></svg>
           Audio
         </h3>
@@ -539,7 +537,7 @@
           <div class="space-y-2">
             <div class="flex justify-between items-center">
               <label for="warningVolumeInput" class="font-medium text-white/90">Warning Volume</label>
-              <span id="warningVolumeValue" class="font-mono text-sm text-white/50">80%</span>
+              <span id="warningVolumeValue" class="font-mono text-sm text-white/70">80%</span>
             </div>
             <input type="range" id="warningVolumeInput" min="0" max="100" step="1" value="80" class="w-full accent-white bg-white/10 rounded-lg appearance-none h-2 cursor-pointer">
           </div>
@@ -550,7 +548,7 @@
           <div class="flex justify-between items-center">
             <div>
               <label class="font-medium text-white/90">Enable Warning Sound</label>
-              <p class="text-xs text-white/40">Play an audio cue when focus is lost.</p>
+              <p class="text-xs text-white/60">Play an audio cue when focus is lost.</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="soundEnabledInput" class="sr-only peer" checked>
@@ -562,7 +560,7 @@
 
       <!-- Camera Category -->
       <section class="space-y-4">
-        <h3 class="font-mono text-sm text-focus-green uppercase tracking-widest flex items-center gap-2">
+        <h3 class="font-sans text-sm text-focus-green flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           Camera
         </h3>
@@ -570,22 +568,22 @@
         <div class="glass-panel p-6 border-white/5 space-y-6">
           <div class="space-y-2">
             <label for="cameraSelect" class="font-medium text-white/90">Camera Selection</label>
-            <p class="text-xs text-white/40 mb-2">Select the camera used for face tracking.</p>
+            <p class="text-xs text-white/60 mb-2">Select the camera used for face tracking.</p>
             <div class="relative">
               <select id="cameraSelect" class="w-full bg-black/40 border border-white/10 text-white text-sm rounded-lg focus:ring-focus-green focus:border-focus-green block p-2.5 appearance-none">
                 <option value="">Loading cameras...</option>
               </select>
-              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/50">
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/70">
                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
               </div>
             </div>
           </div>
           
           <div class="space-y-2">
-            <span class="text-xs text-white/50 uppercase tracking-widest">Preview</span>
+            <span class="text-xs text-white/70 uppercase tracking-widest">Preview</span>
             <div class="w-full aspect-video bg-black/40 rounded-lg border border-white/5 flex items-center justify-center overflow-hidden relative">
               <video id="cameraPreview" class="w-full h-full object-contain hidden" autoplay playsinline muted></video>
-              <div id="cameraPreviewPlaceholder" class="text-white/20 text-sm font-mono flex flex-col items-center gap-2">
+              <div id="cameraPreviewPlaceholder" class="text-white/20 text-sm font-sans flex flex-col items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                 <span>Select a camera</span>
               </div>
@@ -596,7 +594,7 @@
           <div class="flex justify-between items-center mt-4 border-t border-white/5 pt-4">
             <div>
               <label class="font-medium text-white/90">Mirror Camera</label>
-              <p class="text-xs text-white/40">Mirror camera preview for easier positioning.</p>
+              <p class="text-xs text-white/60">Mirror camera preview for easier positioning.</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="mirrorCameraInput" class="sr-only peer" checked>
@@ -613,7 +611,7 @@
   <div id="sessionReportModal" class="fixed inset-0 z-[100] bg-bg-deep/90 backdrop-blur-md flex items-center justify-center hidden overflow-y-auto py-8">
     <div class="glass-panel w-full max-w-2xl my-auto p-8 flex flex-col gap-8 relative shadow-2xl transition-all">
       <!-- Close Button (X) -->
-      <button id="btnCloseModal" class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+      <button id="btnCloseModal" class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -622,15 +620,15 @@
       <!-- Header -->
       <div class="text-center space-y-1 border-b border-white/10 pb-6">
         <h3 id="reportTitle" class="font-display text-2xl font-bold tracking-widest text-white/90 uppercase">SESSION REPORT</h3>
-        <p id="reportRating" class="font-mono text-sm font-bold text-focus-green">Excellent Focus</p>
-        <p class="font-mono text-[10px] uppercase text-white/40 mt-2">SESSION GOAL</p>
+        <p id="reportRating" class="font-sans text-sm font-bold text-focus-green">Excellent Focus</p>
+        <p class="font-sans text-[10px] text-white/60 mt-2">SESSION GOAL</p>
         <p id="reportGoal" class="text-sm font-bold text-white/80">General Focus Session</p>
       </div>
 
       <div id="reportContentContainer" class="flex flex-col gap-8">
         <!-- Low Confidence Warning Banner -->
         <div id="reportLowConfidenceWarning" class="hidden w-full bg-warning-yellow/10 border border-warning-yellow/30 text-warning-yellow rounded-lg p-3 text-center">
-          <span class="text-[10px] font-mono uppercase tracking-widest font-bold block mb-1 flex items-center justify-center gap-2">
+          <span class="text-[10px] font-sans font-bold block mb-1 flex items-center justify-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             LOW CONFIDENCE SESSION
           </span>
@@ -641,37 +639,37 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Focus Score Section -->
           <div class="flex flex-col items-center justify-center space-y-4 bg-black/20 p-6 rounded-lg border border-white/5">
-            <p class="font-mono text-xs text-white/50 uppercase tracking-widest">FOCUS SCORE</p>
+            <p class="font-sans text-xs text-white/70">FOCUS SCORE</p>
             <div class="flex items-baseline gap-2">
               <span id="reportScoreValue" class="text-7xl font-display font-bold text-focus-green tabular-nums drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]">0</span>
               <span class="text-xl font-mono text-white/30">/100</span>
             </div>
-            <div id="reportBadge" class="px-4 py-1.5 rounded-full bg-focus-green/10 border border-focus-green/30 text-focus-green font-mono text-sm tracking-wide text-center">
+            <div id="reportBadge" class="px-4 py-1.5 rounded-full bg-focus-green/10 border border-focus-green/30 text-focus-green font-sans text-sm text-center">
               🏆 Deep Work Master
             </div>
           </div>
 
           <!-- Statistics Section -->
-          <div class="flex flex-col justify-center space-y-3 bg-black/20 p-6 rounded-lg border border-white/5 font-mono text-sm">
+          <div class="flex flex-col justify-center space-y-3 bg-black/20 p-6 rounded-lg border border-white/5 font-sans text-sm">
             <div class="flex justify-between items-center">
               <span class="text-white/60">Focus Time</span>
-              <span id="reportFocusTime" class="text-white font-bold">0m 0s</span>
+              <span id="reportFocusTime" class="text-white font-bold font-mono">0m 0s</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-white/60">Distracted</span>
-              <span id="reportDistractedTime" class="text-white font-bold">0m 0s</span>
+              <span id="reportDistractedTime" class="text-white font-bold font-mono">0m 0s</span>
             </div>
             <div class="flex justify-between items-center pb-3 border-b border-white/5">
               <span class="text-white/60">Face Lost</span>
-              <span id="reportFaceLostTime" class="text-white font-bold">0s</span>
+              <span id="reportFaceLostTime" class="text-white font-bold font-mono">0s</span>
             </div>
             <div class="flex justify-between items-center pt-1">
               <span class="text-white/60">Warnings</span>
-              <span id="reportWarnings" class="text-warning-yellow font-bold drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]">0</span>
+              <span id="reportWarnings" class="text-warning-yellow font-bold drop-shadow-[0_0_5px_rgba(234,179,8,0.5)] font-mono">0</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-white/60">Alerts</span>
-              <span id="reportAlerts" class="text-alert-red font-bold drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">0</span>
+              <span id="reportAlerts" class="text-alert-red font-bold drop-shadow-[0_0_5px_rgba(239,68,68,0.5)] font-mono">0</span>
             </div>
           </div>
         </div>
@@ -680,7 +678,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Monitoring Quality -->
           <div class="bg-black/20 p-5 rounded-lg border border-white/5 flex flex-col justify-center space-y-4">
-            <p class="font-mono text-xs text-white/50 uppercase tracking-widest border-b border-white/10 pb-2">Monitoring Quality</p>
+            <p class="font-sans text-xs text-white/70 border-b border-white/10 pb-2">Monitoring Quality</p>
             <div class="flex justify-between items-end">
               <span id="reportQualityLabel" class="font-bold text-focus-green text-sm">Excellent Monitoring</span>
               <span id="reportQualityPercent" class="font-mono font-bold text-2xl text-white">100%</span>
@@ -690,12 +688,12 @@
 
           <!-- Focus Distribution -->
           <div class="bg-black/20 p-5 rounded-lg border border-white/5 space-y-4 flex flex-col justify-center">
-            <p class="font-mono text-xs text-white/50 uppercase tracking-widest border-b border-white/10 pb-2">Focus Distribution</p>
+            <p class="font-sans text-xs text-white/70 border-b border-white/10 pb-2">Focus Distribution</p>
             
             <div class="space-y-1">
-              <div class="flex justify-between font-mono text-xs">
+              <div class="flex justify-between font-sans text-xs">
                 <span class="text-focus-green">Focus</span>
-                <span id="reportFocusPercent" class="text-white">0%</span>
+                <span id="reportFocusPercent" class="text-white font-mono">0%</span>
               </div>
               <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden flex">
                 <div id="reportFocusBar" class="h-full bg-focus-green transition-all" style="width: 0%"></div>
@@ -703,9 +701,9 @@
             </div>
 
             <div class="space-y-1">
-              <div class="flex justify-between font-mono text-xs">
+              <div class="flex justify-between font-sans text-xs">
                 <span class="text-warning-yellow">Distracted</span>
-                <span id="reportDistractPercent" class="text-white">0%</span>
+                <span id="reportDistractPercent" class="text-white font-mono">0%</span>
               </div>
               <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden flex">
                 <div id="reportDistractBar" class="h-full bg-warning-yellow transition-all" style="width: 0%"></div>
@@ -717,7 +715,7 @@
         <!-- AI Insight Section -->
         <div class="bg-focus-green/5 border border-focus-green/20 rounded-lg p-5 relative overflow-hidden">
           <div class="absolute top-0 left-0 w-1 h-full bg-focus-green"></div>
-          <p class="font-mono text-xs text-focus-green uppercase tracking-widest mb-2 flex items-center gap-2">
+          <p class="font-sans text-xs text-focus-green mb-2 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             AI Insight
           </p>
@@ -726,7 +724,7 @@
 
         <!-- Event Timeline Section -->
         <div class="bg-black/20 rounded-lg border border-white/5 overflow-hidden flex flex-col h-56">
-          <p class="font-mono text-xs text-white/50 uppercase tracking-widest p-4 border-b border-white/10 bg-black/40">Event Timeline</p>
+          <p class="font-sans text-xs text-white/70 p-4 border-b border-white/10 bg-black/40">Event Timeline</p>
           <div id="reportTimeline" class="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-xs">
             <!-- Timeline items will be injected here -->
           </div>
@@ -750,7 +748,7 @@
   <div id="sessionDetailModal" class="fixed inset-0 z-[100] bg-bg-deep/90 backdrop-blur-md flex items-center justify-center hidden overflow-y-auto py-8">
     <div class="glass-panel w-full max-w-2xl my-auto p-8 flex flex-col gap-8 relative shadow-2xl transition-all">
       <!-- Close Button (X) -->
-      <button id="btnCloseDetailModal" class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+      <button id="btnCloseDetailModal" class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -759,7 +757,7 @@
       <!-- Header -->
       <div class="text-center space-y-1 border-b border-white/10 pb-6">
         <h3 id="detailTitle" class="font-display text-2xl font-bold tracking-widest text-white/90 uppercase">SESSION DETAILS</h3>
-        <p id="detailRating" class="font-mono text-sm font-bold text-white/50">Jun 6, 2026 - 10:30 AM</p>
+        <p id="detailRating" class="font-mono text-sm font-bold text-white/70">Jun 6, 2026 - 10:30 AM</p>
       </div>
 
       <div id="detailContentContainer" class="flex flex-col gap-8">
@@ -767,37 +765,37 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Focus Score Section -->
           <div class="flex flex-col items-center justify-center space-y-4 bg-black/20 p-6 rounded-lg border border-white/5">
-            <p class="font-mono text-xs text-white/50 uppercase tracking-widest">FOCUS SCORE</p>
+            <p class="font-sans text-xs text-white/70">FOCUS SCORE</p>
             <div class="flex items-baseline gap-2">
               <span id="detailScoreValue" class="text-7xl font-display font-bold text-focus-green tabular-nums drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]">0</span>
               <span class="text-xl font-mono text-white/30">/100</span>
             </div>
-            <div id="detailBadge" class="px-4 py-1.5 rounded-full bg-focus-green/10 border border-focus-green/30 text-focus-green font-mono text-sm tracking-wide text-center">
+            <div id="detailBadge" class="px-4 py-1.5 rounded-full bg-focus-green/10 border border-focus-green/30 text-focus-green font-sans text-sm text-center">
               -
             </div>
           </div>
 
           <!-- Statistics Section -->
-          <div class="flex flex-col justify-center space-y-3 bg-black/20 p-6 rounded-lg border border-white/5 font-mono text-sm">
+          <div class="flex flex-col justify-center space-y-3 bg-black/20 p-6 rounded-lg border border-white/5 font-sans text-sm">
             <div class="flex justify-between items-center">
               <span class="text-white/60">Focus Time</span>
-              <span id="detailFocusTime" class="text-white font-bold">0m 0s</span>
+              <span id="detailFocusTime" class="text-white font-bold font-mono">0m 0s</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-white/60">Distracted</span>
-              <span id="detailDistractedTime" class="text-white font-bold">0m 0s</span>
+              <span id="detailDistractedTime" class="text-white font-bold font-mono">0m 0s</span>
             </div>
             <div class="flex justify-between items-center pb-3 border-b border-white/5">
               <span class="text-white/60">Face Lost</span>
-              <span id="detailFaceLostTime" class="text-white font-bold">0s</span>
+              <span id="detailFaceLostTime" class="text-white font-bold font-mono">0s</span>
             </div>
             <div class="flex justify-between items-center pt-1">
               <span class="text-white/60">Warnings</span>
-              <span id="detailWarnings" class="text-warning-yellow font-bold drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]">0</span>
+              <span id="detailWarnings" class="text-warning-yellow font-bold drop-shadow-[0_0_5px_rgba(234,179,8,0.5)] font-mono">0</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-white/60">Alerts</span>
-              <span id="detailAlerts" class="text-alert-red font-bold drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">0</span>
+              <span id="detailAlerts" class="text-alert-red font-bold drop-shadow-[0_0_5px_rgba(239,68,68,0.5)] font-mono">0</span>
             </div>
           </div>
         </div>
@@ -806,11 +804,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Monitoring Quality -->
           <div class="bg-black/20 p-5 rounded-lg border border-white/5 flex flex-col justify-center space-y-4">
-            <p class="font-mono text-xs text-white/50 uppercase tracking-widest border-b border-white/10 pb-2">Monitoring Quality</p>
+            <p class="font-sans text-xs text-white/70 border-b border-white/10 pb-2">Monitoring Quality</p>
             <div class="flex justify-between items-end">
               <div class="flex flex-col gap-1">
                 <span id="detailQualityLabel" class="font-bold text-focus-green text-sm">Excellent Monitoring</span>
-                <span id="detailConfidenceBadge" class="self-start px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase tracking-widest border bg-focus-green/20 text-focus-green border-focus-green/30">Confidence: Excellent</span>
+                <span id="detailConfidenceBadge" class="self-start px-2 py-0.5 rounded text-[10px] font-bold font-sans border bg-focus-green/20 text-focus-green border-focus-green/30">Confidence: Excellent</span>
               </div>
               <span id="detailQualityPercent" class="font-mono font-bold text-2xl text-white">100%</span>
             </div>
@@ -819,12 +817,12 @@
 
           <!-- Focus Distribution -->
           <div class="bg-black/20 p-5 rounded-lg border border-white/5 space-y-4 flex flex-col justify-center">
-            <p class="font-mono text-xs text-white/50 uppercase tracking-widest border-b border-white/10 pb-2">Focus Distribution</p>
+            <p class="font-sans text-xs text-white/70 border-b border-white/10 pb-2">Focus Distribution</p>
             
             <div class="space-y-1">
-              <div class="flex justify-between font-mono text-xs">
+              <div class="flex justify-between font-sans text-xs">
                 <span class="text-focus-green">Focus</span>
-                <span id="detailFocusPercent" class="text-white">0%</span>
+                <span id="detailFocusPercent" class="text-white font-mono">0%</span>
               </div>
               <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden flex">
                 <div id="detailFocusBar" class="h-full bg-focus-green transition-all" style="width: 0%"></div>
@@ -832,9 +830,9 @@
             </div>
 
             <div class="space-y-1">
-              <div class="flex justify-between font-mono text-xs">
+              <div class="flex justify-between font-sans text-xs">
                 <span class="text-warning-yellow">Distracted</span>
-                <span id="detailDistractPercent" class="text-white">0%</span>
+                <span id="detailDistractPercent" class="text-white font-mono">0%</span>
               </div>
               <div class="h-2 w-full bg-white/10 rounded-full overflow-hidden flex">
                 <div id="detailDistractBar" class="h-full bg-warning-yellow transition-all" style="width: 0%"></div>
@@ -846,7 +844,7 @@
         <!-- AI Insight Section -->
         <div class="bg-focus-green/5 border border-focus-green/20 rounded-lg p-5 relative overflow-hidden">
           <div class="absolute top-0 left-0 w-1 h-full bg-focus-green"></div>
-          <p class="font-mono text-xs text-focus-green uppercase tracking-widest mb-2 flex items-center gap-2">
+          <p class="font-sans text-xs text-focus-green mb-2 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             AI Insight
           </p>
@@ -855,7 +853,7 @@
 
         <!-- Event Timeline Section -->
         <div class="bg-black/20 rounded-lg border border-white/5 overflow-hidden flex flex-col h-56">
-          <p class="font-mono text-xs text-white/50 uppercase tracking-widest p-4 border-b border-white/10 bg-black/40">Event Timeline</p>
+          <p class="font-sans text-xs text-white/70 p-4 border-b border-white/10 bg-black/40">Event Timeline</p>
           <div id="detailTimeline" class="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-xs">
             <!-- Timeline items will be injected here -->
           </div>
